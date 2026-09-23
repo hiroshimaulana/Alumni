@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Istanbul University — MIS Alumni Portal</title>
+    <style>
+        :root {
+            --primary-navy: #003366;
+            --primary-gold: #C5A059;
+            --secondary-dark: #0F172A;
+            --slate-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --accent-green: #10B981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--slate-bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-navy);
+            color: #FFFFFF;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+        }
+
+        .header-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-badge {
+            background-color: var(--primary-gold);
+            color: var(--primary-navy);
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        nav a {
+            color: #E2E8F0;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--primary-gold);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, #001f3f 100%);
+            color: #FFFFFF;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #CBD5E1;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            padding: 0.4rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: -2rem auto 3rem;
+            padding: 0 1.5rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.75rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            color: var(--primary-navy);
+        }
+
+        .badge-method {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .get-badge {
+            background-color: #E0F2FE;
+            color: #0369A1;
+        }
+
+        .post-badge {
+            background-color: #DCFCE7;
+            color: #15803D;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .endpoint-url {
+            display: block;
+            background: #F1F5F9;
+            padding: 0.6rem 0.85rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.88rem;
+            color: var(--secondary-dark);
+            margin-bottom: 1rem;
+            word-break: break-all;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary-navy);
+            color: #FFFFFF;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #002244;
+        }
+
+        .btn-gold {
+            background: var(--primary-gold);
+            color: var(--primary-navy);
+        }
+
+        .btn-gold:hover {
+            background: #b38f4a;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-color);
+            background: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="brand-title">
+                <span>İstanbul Üniversitesi</span>
+                <span class="brand-badge">MIS Alumni</span>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/auto/main">Main View</a>
+                <a href="/auto/about">About Us</a>
+                <a href="/alumni">Alumni Directory</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="status-pill">
+            <span style="font-size: 1.2em;">●</span> API Routing & Services Active
+        </div>
+        <h1 style="margin-top: 1.5rem;">Faculty of Economics — MIS Alumni Portal</h1>
+        <p>Central platform bridging graduates, current students, faculty coordinators, and institutional analytics for the Management Information Systems department.</p>
+    </section>
+
+    <div class="container">
+        <div class="card-grid">
+
+            <!-- Route 1: /auto -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Health Status</h3>
+                    <span class="badge-method get-badge">GET</span>
+                </div>
+                <p>Verifies operational status of the <code>/auto</code> route group.</p>
+                <span class="endpoint-url">/auto</span>
+                <a href="/auto" target="_blank" class="btn">Test Endpoint</a>
+            </div>
+
+            <!-- Route 2: /auto/hello -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>World Greeting</h3>
+                    <span class="badge-method get-badge">GET</span>
+                </div>
+                <p>Returns standard friendly greeting response payload.</p>
+                <span class="endpoint-url">/auto/hello</span>
+                <a href="/auto/hello" target="_blank" class="btn">Test Endpoint</a>
+            </div>
+
+            <!-- Route 3: /auto/hello/{name} -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Personalized Greeting</h3>
+                    <span class="badge-method get-badge">GET</span>
+                </div>
+                <p>Accepts dynamic path parameter and returns tailored greeting.</p>
+                <span class="endpoint-url">/auto/hello/senol</span>
+                <a href="/auto/hello/senol" target="_blank" class="btn">Test Endpoint</a>
+            </div>
+
+            <!-- Route 4: /auto/sum/{n1}/{n2} -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Numeric Calculation</h3>
+                    <span class="badge-method get-badge">GET</span>
+                </div>
+                <p>Type-casts inputs, validates arithmetic, and returns JSON sum.</p>
+                <span class="endpoint-url">/auto/sum/10/5</span>
+                <a href="/auto/sum/10/5" target="_blank" class="btn">Test Endpoint</a>
+            </div>
+
+            <!-- Route 5: /alumni -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Alumni Directory</h3>
+                    <span class="badge-method get-badge">GET</span>
+                </div>
+                <p>Fetches alumni database records or reports operational standby status.</p>
+                <span class="endpoint-url">/alumni</span>
+                <a href="/alumni" target="_blank" class="btn btn-gold">View Alumni Data</a>
+            </div>
+
+            <!-- Route 6: POST skeleton -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Generic POST Handler</h3>
+                    <span class="badge-method post-badge">POST</span>
+                </div>
+                <p>Skeleton router ready to accept JSON or form payloads for future mutations.</p>
+                <span class="endpoint-url">POST /auto or POST /alumni</span>
+                <a href="/auto/about" class="btn">Learn More</a>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Istanbul University Faculty of Economics — Management Information Systems (MIS). All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

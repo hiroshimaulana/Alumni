@@ -1,0 +1,68 @@
+### Base Variables
+@baseUrl = http://localhost:8000
+
+### 1. Test /auto root GET
+GET {{baseUrl}}/auto
+Accept: text/plain
+
+### 2. Test /auto/ with trailing slash
+GET {{baseUrl}}/auto/
+Accept: text/plain
+
+### 3. Test /auto/hello
+GET {{baseUrl}}/auto/hello
+Accept: text/plain
+
+### 4. Test /auto/hello/{name} (e.g., senol)
+GET {{baseUrl}}/auto/hello/senol
+Accept: text/plain
+
+### 5. Test /auto/sum/{number1}/{number2} (Valid Integers)
+GET {{baseUrl}}/auto/sum/10/5
+Accept: application/json
+
+### 6. Test /auto/sum/{number1}/{number2} (Floats)
+GET {{baseUrl}}/auto/sum/12.5/2.5
+Accept: application/json
+
+### 7. Test /auto/sum/{number1}/{number2} (Invalid Input Validation)
+GET {{baseUrl}}/auto/sum/abc/5
+Accept: application/json
+
+### 8. Test /auto/main (Main View Page)
+GET {{baseUrl}}/auto/main
+Accept: text/html
+
+### 9. Test /auto/about (About View Page)
+GET {{baseUrl}}/auto/about
+Accept: text/html
+
+### 10. Test Top-Level Landing Page (/)
+GET {{baseUrl}}/
+Accept: text/html
+
+### 11. Test Top-Level About Page (/about)
+GET {{baseUrl}}/about
+Accept: text/html
+
+### 12. Test Alumni Directory Endpoint (/alumni)
+GET {{baseUrl}}/alumni
+Accept: application/json
+
+### 13. Test Generic POST Skeleton with JSON Payload
+POST {{baseUrl}}/auto
+Content-Type: application/json
+
+{
+    "action": "test_ping",
+    "sender": "qa_client",
+    "params": {
+        "status": "ready"
+    }
+}
+
+### 14. Test Generic POST Skeleton with Form Payload
+POST {{baseUrl}}/auto
+Content-Type: application/x-www-form-urlencoded
+
+action=form_submit&name=Senol&department=MIS
