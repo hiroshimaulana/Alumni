@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><!-- PAGE_TITLE --> — Istanbul University MIS Alumni Portal</title>
+    <style>
+        :root {
+            --primary-navy: #003366;
+            --primary-gold: #C5A059;
+            --secondary-dark: #0F172A;
+            --slate-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
+            --accent-blue: #3B82F6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--slate-bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-navy);
+            color: #FFFFFF;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+        }
+
+        .header-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-badge {
+            background-color: var(--primary-gold);
+            color: var(--primary-navy);
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        nav a {
+            color: #FFFFFF;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--primary-gold);
+            padding-bottom: 0.2rem;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title h1 {
+            font-size: 1.85rem;
+            color: var(--primary-navy);
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.6rem 1.15rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:focus-visible,
+        .form-control:focus-visible,
+        .modal-close:focus-visible {
+            outline: 3px solid rgba(197, 160, 89, 0.6);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-navy);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: #002244;
+        }
+
+        .btn-gold {
+            background-color: var(--primary-gold);
+            color: var(--primary-navy);
+        }
+
+        .btn-gold:hover {
+            background-color: #b38f4a;
+        }
+
+        .btn-secondary {
+            background-color: #E2E8F0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background-color: #CBD5E1;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-red);
+            color: #FFFFFF;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-info {
+            background-color: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .profile-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .profile-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary-navy);
+            color: #FFFFFF;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid var(--primary-gold);
+        }
+
+        .profile-info h2 {
+            font-size: 1.4rem;
+            color: var(--primary-navy);
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary-navy);
+            margin-top: 0.25rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fafbfd;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-box {
+            padding: 0.5rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            width: 260px;
+            max-width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #F8FAFC;
+            padding: 0.85rem 1.25rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: #F8FAFC;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #E2E8F0;
+            color: #334155;
+        }
+
+        .badge-super_admin {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge-faculty_admin {
+            background-color: #E0E7FF;
+            color: #3730A3;
+        }
+
+        .badge-alumni {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .badge-student {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge-verified {
+            background-color: #DEF7EC;
+            color: #03543F;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.45rem;
+        }
+
+        .badge-pending {
+            background-color: #FEF3C7;
+            color: #92400E;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.45rem;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        .table-actions form {
+            display: inline;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #FFFFFF;
+            width: 90%;
+            max-width: 500px;
+            max-height: 92vh;
+            overflow-y: auto;
+            border-radius: 10px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            background: var(--primary-navy);
+            color: #FFFFFF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.15rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-navy);
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-check label {
+            margin-bottom: 0;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <div class="brand-title">
+                <span>İstanbul Üniversitesi</span>
+                <span class="brand-badge">MIS</span>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+                <a href="/users" class="active">Users</a>
+                <a href="/swagger">Swagger Docs</a>
+                <a href="/alumni" target="_blank" rel="noopener">Alumni API</a>
+                <a href="/api/users" target="_blank" rel="noopener">Users API</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- NOTICE_PLACEHOLDER -->
+
+        <!-- Single user profile (shown on /users/{id}) -->
+        <div id="singleUserSection" style="display: none;">
+            <div class="profile-card">
+                <div class="profile-left">
+                    <div class="profile-avatar" id="singleAvatar">U</div>
+                    <div class="profile-info">
+                        <h2 id="singleName">User Name</h2>
+                        <p id="singleEmail">user@example.com</p>
+                        <div class="profile-badges">
+                            <span class="badge" id="singleRoleBadge">Role</span>
+                            <span class="badge badge-verified" id="singleStatusBadge">Status</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button type="button" class="btn btn-gold" id="singleEditBtn">Edit Profile</button>
+                    <form id="singleDeleteForm" method="POST" data-confirm="Are you sure you want to delete this user?">
+                        <button type="submit" class="btn btn-danger">Delete User</button>
+                    </form>
+                    <a href="/users" class="btn btn-secondary">&larr; Back to Directory</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-header">
+            <div class="page-title">
+                <h1>User Management (MVC Model Demo)</h1>
+                <p>Complete CRUD operations (Create, Read, Update, Delete) powered by <code>UserController</code> and
+                    the <code>User</code> model.</p>
+            </div>
+            <div>
+                <a href="/users/create" class="btn btn-primary" id="addUserBtn">+ Add New User</a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total Users</div>
+                <div class="value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Alumni Users</div>
+                <div class="value" id="stat-alumni">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Faculty &amp; Staff</div>
+                <div class="value" id="stat-faculty">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Current Students</div>
+                <div class="value" id="stat-student">0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 style="font-size: 1.1rem; color: var(--primary-navy);">Registered Users</h3>
+                <input type="search" id="searchInput" class="search-box" placeholder="Filter by name, email, role..."
+                    aria-label="Filter users by name, email or role">
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Full Name</th>
+                            <th scope="col">Email Address</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create User Modal -->
+    <div id="createModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="createModalTitle">Create New User</h2>
+                <button type="button" class="modal-close" data-close="create" aria-label="Close">&times;</button>
+            </div>
+            <form action="/users" method="POST" id="createUserForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="create_first_name">First Name *</label>
+                        <input type="text" id="create_first_name" name="first_name" class="form-control" required
+                            autocomplete="given-name" placeholder="e.g. Can">
+                    </div>
+                    <div class="form-group">
+                        <label for="create_last_name">Last Name *</label>
+                        <input type="text" id="create_last_name" name="last_name" class="form-control" required
+                            autocomplete="family-name" placeholder="e.g. Aydın">
+                    </div>
+                    <div class="form-group">
+                        <label for="create_email">Email Address *</label>
+                        <input type="email" id="create_email" name="email" class="form-control" required
+                            autocomplete="email" placeholder="e.g. can.aydin@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="create_role">Role *</label>
+                        <select id="create_role" name="role" class="form-control" required>
+                            <option value="alumni">Alumni</option>
+                            <option value="student">Student</option>
+                            <option value="faculty_admin">Faculty Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="create_is_verified" name="is_verified" value="1" checked>
+                        <label for="create_is_verified">Verified Account</label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close="create">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="editModalTitle">Edit User Profile</h2>
+                <button type="button" class="modal-close" data-close="edit" aria-label="Close">&times;</button>
+            </div>
+            <form id="editUserForm" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_first_name">First Name *</label>
+                        <input type="text" id="edit_first_name" name="first_name" class="form-control" required
+                            autocomplete="given-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_last_name">Last Name *</label>
+                        <input type="text" id="edit_last_name" name="last_name" class="form-control" required
+                            autocomplete="family-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_email">Email Address *</label>
+                        <input type="email" id="edit_email" name="email" class="form-control" required
+                            autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_role">Role *</label>
+                        <select id="edit_role" name="role" class="form-control" required>
+                            <option value="alumni">Alumni</option>
+                            <option value="student">Student</option>
+                            <option value="faculty_admin">Faculty Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="edit_is_verified" name="is_verified" value="1">
+                        <label for="edit_is_verified">Verified Account</label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close="edit">Cancel</button>
+                        <button type="submit" class="btn btn-gold">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Istanbul University Faculty of Economics — Management Information Systems Department.</p>
+        <p>MVC Demonstration &bull; PHP 8.1+ &bull; Native Architecture</p>
+    </footer>
+
+    <script>
+        /* USERS_JSON_PLACEHOLDER */
+
+        const users = (typeof serverUsers !== 'undefined' && Array.isArray(serverUsers)) ? serverUsers : [];
+        const token = (typeof csrfToken !== 'undefined') ? csrfToken : '';
+        const KNOWN_ROLES = ['alumni', 'student', 'faculty_admin', 'super_admin'];
+        let lastTrigger = null;
+
+        // ---------- helpers ----------
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+        function roleClass(role) { return KNOWN_ROLES.includes(role) ? role : 'unknown'; }
+        function roleLabel(role) { return String(role || 'unknown').replace(/_/g, ' '); }
+        function csrfInput() { return `<input type="hidden" name="_csrf" value="${escapeHtml(token)}">`; }
+
+        function addCsrfToForm(form) {
+            if (!form.querySelector('input[name="_csrf"]')) {
+                form.insertAdjacentHTML('beforeend', csrfInput());
+            }
+        }
+
+        // ---------- table ----------
+        function renderUsers(list) {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching user records found.</td></tr>';
+                return;
+            }
+
+            list.forEach(u => {
+                const id = Number(u.id);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 700; color: var(--text-muted);">#${id}</td>
+                    <td style="font-weight: 600; color: var(--primary-navy);">${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</td>
+                    <td><code>${escapeHtml(u.email)}</code></td>
+                    <td><span class="badge badge-${roleClass(u.role)}">${escapeHtml(roleLabel(u.role))}</span></td>
+                    <td><span class="badge ${u.is_verified ? 'badge-verified' : 'badge-pending'}">${u.is_verified ? '✓ Verified' : 'Pending'}</span></td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">${escapeHtml(u.created_at || '—')}</td>
+                    <td>
+                        <div class="table-actions">
+                            <a href="/users/${id}" class="btn btn-sm btn-secondary" title="View details">View</a>
+                            <button type="button" data-edit="${id}" class="btn btn-sm btn-gold" title="Edit user">Edit</button>
+                            <form action="/users/${id}/delete" method="POST" data-confirm="Are you sure you want to delete user #${id}?">
+                                ${csrfInput()}
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete user">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = users.length;
+            document.getElementById('stat-alumni').textContent = users.filter(u => u.role === 'alumni').length;
+            document.getElementById('stat-faculty').textContent = users.filter(u => u.role === 'faculty_admin' || u.role === 'super_admin').length;
+            document.getElementById('stat-student').textContent = users.filter(u => u.role === 'student').length;
+        }
+
+        function filterTable() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            renderUsers(users.filter(u =>
+                `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(q) ||
+                String(u.email || '').toLowerCase().includes(q) ||
+                String(u.role || '').toLowerCase().includes(q)
+            ));
+        }
+
+        // ---------- modals ----------
+        function openModal(modalId, focusId) {
+            lastTrigger = document.activeElement;
+            const modal = document.getElementById(modalId);
+            modal.classList.add('active');
+            const el = document.getElementById(focusId);
+            if (el) el.focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Leave /users/create or /users/{id}/edit so a refresh doesn't reopen the modal
+            if (/^\/users\/(create|\d+\/edit)$/.test(location.pathname)) {
+                history.replaceState(null, '', '/users');
+            }
+            if (lastTrigger && typeof lastTrigger.focus === 'function') lastTrigger.focus();
+        }
+
+        function openCreateModal(values) {
+            if (values) {
+                document.getElementById('create_first_name').value = values.first_name || '';
+                document.getElementById('create_last_name').value = values.last_name || '';
+                document.getElementById('create_email').value = values.email || '';
+                document.getElementById('create_role').value = KNOWN_ROLES.includes(values.role) ? values.role : 'alumni';
+                document.getElementById('create_is_verified').checked = Boolean(Number(values.is_verified));
+            }
+            openModal('createModal', 'create_first_name');
+        }
+        function closeCreateModal() { closeModal('createModal'); }
+
+        // `override` lets the server re-populate the form after a failed update
+        function openEditModal(userId, override) {
+            const user = override || users.find(u => Number(u.id) === Number(userId));
+            if (!user) return;
+
+            document.getElementById('edit_first_name').value = user.first_name || '';
+            document.getElementById('edit_last_name').value = user.last_name || '';
+            document.getElementById('edit_email').value = user.email || '';
+            document.getElementById('edit_role').value = KNOWN_ROLES.includes(user.role) ? user.role : 'alumni';
+            document.getElementById('edit_is_verified').checked = Boolean(Number(user.is_verified));
+            document.getElementById('editUserForm').action = `/users/${Number(user.id)}/update`;
+
+            openModal('editModal', 'edit_first_name');
+        }
+        function closeEditModal() { closeModal('editModal'); }
+
+        // ---------- events ----------
+        document.getElementById('addUserBtn').addEventListener('click', e => { e.preventDefault(); openCreateModal(); });
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+
+        // Edit buttons in table rows (event delegation)
+        document.getElementById('userTableBody').addEventListener('click', e => {
+            const btn = e.target.closest('[data-edit]');
+            if (btn) openEditModal(Number(btn.dataset.edit));
+        });
+
+        // Modal close buttons + backdrop click
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.close === 'create' ? 'createModal' : 'editModal'));
+        });
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('mousedown', e => { if (e.target === modal) closeModal(modal.id); });
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id));
+            }
+        });
+
+        // Delete confirmation for any form carrying data-confirm
+        document.addEventListener('submit', e => {
+            const form = e.target.closest('form[data-confirm]');
+            if (form && !confirm(form.dataset.confirm)) e.preventDefault();
+        });
+
+        // ---------- initialisation ----------
+        document.querySelectorAll('form').forEach(addCsrfToForm);
+
+        // Single user profile (GET /users/{id})
+        if (typeof isSingleView !== 'undefined' && isSingleView && typeof currentSingleUser !== 'undefined' && currentSingleUser) {
+            const su = currentSingleUser;
+            document.getElementById('singleUserSection').style.display = 'block';
+            document.getElementById('singleAvatar').textContent = (su.first_name ? su.first_name[0] : 'U').toUpperCase();
+            document.getElementById('singleName').textContent = `${su.first_name} ${su.last_name} (#${Number(su.id)})`;
+            document.getElementById('singleEmail').textContent = su.email;
+
+            const rBadge = document.getElementById('singleRoleBadge');
+            rBadge.className = `badge badge-${roleClass(su.role)}`;
+            rBadge.textContent = roleLabel(su.role);
+
+            const sBadge = document.getElementById('singleStatusBadge');
+            sBadge.className = `badge ${su.is_verified ? 'badge-verified' : 'badge-pending'}`;
+            sBadge.textContent = su.is_verified ? '✓ Verified' : 'Pending';
+
+            document.getElementById('singleDeleteForm').action = `/users/${Number(su.id)}/delete`;
+            document.getElementById('singleEditBtn').addEventListener('click', () => openEditModal(su.id));
+        }
+
+        // /users/create, or create form re-shown after a validation error
+        if (typeof autoOpenCreate !== 'undefined' && autoOpenCreate) {
+            openCreateModal(typeof oldInput !== 'undefined' ? oldInput : null);
+        }
+
+        // /users/{id}/edit, or edit form re-shown after a validation error
+        if (typeof autoOpenEdit !== 'undefined' && autoOpenEdit && typeof formUser !== 'undefined' && formUser) {
+            openEditModal(formUser.id, formUser);
+        }
+
+        updateStats();
+        renderUsers(users);
+    </script>
+</body>
+
+</html>

@@ -64,8 +64,56 @@ function textResponse(string $text, int $statusCode = 200): void {
     exit;
 }
 
+// Load MVC components
+require_once __DIR__ . '/models/User.php';
+require_once __DIR__ . '/controllers/UserController.php';
+require_once __DIR__ . '/controllers/ApiUserController.php';
+
+// Start session if available for in-memory model state persistence across web requests
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    @session_start();
+}
+
+// Load Router and Dedicated Routes Layer
+require_once __DIR__ . '/routes/Router.php';
+
+$router = new Router();
+
+// Load Web Routes (includes GET /users and POST /users)
+$webRoutes = require __DIR__ . '/routes/web.php';
+if (is_callable($webRoutes)) {
+    $webRoutes($router);
+}
+
+// Load API Routes (includes REST /api/users CRUD endpoints)
+$apiRoutes = require __DIR__ . '/routes/api.php';
+if (is_callable($apiRoutes)) {
+    $apiRoutes($router);
+}
+
+// Parse request payload (supporting JSON, standard $_POST, and raw form input)
+$rawInput = file_get_contents('php://input');
+$jsonInput = json_decode($rawInput, true);
+parse_str($rawInput, $parsedForm);
+$payload = ($jsonInput !== null) ? $jsonInput : (!empty($_POST) ? $_POST : (is_array($parsedForm) ? $parsedForm : []));
+
 // -------------------------------------------------------------
-// POST Request Skeleton Handler
+// Dispatch through Dedicated Routes Layer
+// -------------------------------------------------------------
+if ($router->dispatch($method, $path, $payload)) {
+    exit;
+}
+
+// Return 404 for unmatched paths under registered route groups
+if (strpos($path, '/api/users') === 0) {
+    jsonResponse(['status' => 'error', 'message' => 'Endpoint not found under /api/users'], 404);
+}
+if (strpos($path, '/users') === 0) {
+    jsonResponse(['status' => 'error', 'message' => 'Route not found under /users'], 404);
+}
+
+// -------------------------------------------------------------
+// POST Request Skeleton Handler (for /auto or generic test endpoints)
 // -------------------------------------------------------------
 if ($method === 'POST') {
     $rawInput = file_get_contents('php://input');
@@ -171,6 +219,33 @@ if ($path === '/about') {
 if ($path === '/alumni') {
     require __DIR__ . '/alumni.php';
     exit;
+}
+
+// Swagger UI Documentation Viewer (GET /swagger or GET /docs)
+if ($path === '/swagger' || $path === '/docs') {
+    renderView('swagger.html');
+}
+
+// OpenAPI Specification JSON (GET /openapi.json or GET /api/docs/openapi.json)
+if ($path === '/openapi.json' || $path === '/api/docs/openapi.json') {
+    $specPath = __DIR__ . '/docs/openapi.json';
+    if (file_exists($specPath)) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        readfile($specPath);
+        exit;
+    }
+}
+
+// OpenAPI Specification YAML (GET /openapi.yaml or GET /api/docs/openapi.yaml)
+if ($path === '/openapi.yaml' || $path === '/api/docs/openapi.yaml') {
+    $specPath = __DIR__ . '/docs/openapi.yaml';
+    if (file_exists($specPath)) {
+        header('Content-Type: text/yaml; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        readfile($specPath);
+        exit;
+    }
 }
 
 // -------------------------------------------------------------

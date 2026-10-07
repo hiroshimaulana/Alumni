@@ -23,6 +23,12 @@ A comprehensive, enterprise-ready alumni tracking system and engagement portal d
    - [2.7 Administrative CRM & Accreditation Analytics](#27-administrative-crm--accreditation-analytics-for-university-staff)
 3. [Technology Stack](#3-technology-stack)
 4. [Database & Architectural Design](#4-database--architectural-design)
+   - [4.1 Relational Data Model & Entities](#41-relational-data-model--entities)
+   - [4.2 MVC (Model-View-Controller) Architecture](#42-mvc-model-view-controller-architecture)
+     - [Project Directory Tree](#project-directory-tree)
+     - [Component Categorization & Architectural Roles](#component-categorization--architectural-roles)
+     - [MVC Component Interaction & Request Lifecycle](#mvc-component-interaction--request-lifecycle)
+     - [Swagger / OpenAPI 3.0 Documentation](#swagger--openapi-30-documentation)
 5. [Setup & Usage Instructions](#5-setup--usage-instructions)
    - [Prerequisites](#prerequisites)
    - [Step 1: Clone or Extract the Repository](#step-1-clone-or-extract-the-repository)
@@ -126,6 +132,8 @@ The **Istanbul University MIS Alumni Portal** bridges the gap between past gradu
 
 ## 4. Database & Architectural Design
 
+### 4.1 Relational Data Model & Entities
+
 The backend uses a normalized relational model organized into the following core entities:
 
 ```
@@ -147,6 +155,231 @@ The backend uses a normalized relational model organized into the following core
 - **`job_postings`**: Opportunity listings, requirements, expiration dates, application links.
 - **`campaigns` & `donations`**: Crowdfunding targets, donor logs, amounts, anonymous flags.
 - **`audit_logs`**: Administrative tracking for accreditation, profile modifications, and data exports.
+
+---
+
+### 4.2 MVC (Model-View-Controller) Architecture
+
+The application is structured following the **Model-View-Controller (MVC)** architectural pattern, separating concerns between data persistence, presentation templates, request routing, and business logic.
+
+#### Project Directory Tree
+
+The visual layout below illustrates the organization of the codebase, categorizing files into their architectural domains:
+
+```text
+Alumni/
+│
+├── .htaccess                   # [Gateway / Routing] Apache URL rewrite rules to Front Controller
+├── index.php                   # [Controller / Router] Front Controller, URI normalization, route dispatcher
+├── alumni.php                  # [Controller] Dedicated Alumni Resource Controller & fallback handler
+├── README.md                   # [Documentation] Comprehensive project architecture and setup manual
+│
+├── config/                     # [Configuration & DAL] Configuration and Database Abstraction Layer
+│   ├── config.php              # Application, database credentials, and institutional metadata
+│   └── db.php                  # PDO database connection factory (singleton with error handling)
+│
+├── controllers/                # [Controllers] Application Controllers
+│   ├── UserController.php      # Web Controller for user management views, forms, and actions
+│   └── ApiUserController.php   # REST API Controller for User CRUD JSON endpoints
+│
+├── database/                   # [Model / Persistence] Relational Database Schema & Data Fixtures
+│   └── schema.sql              # MySQL DDL schema (users, alumni_profiles tables, constraints, seed data)
+│
+├── docs/                       # [API Specifications] OpenAPI 3.0.3 & Swagger Documentation
+│   ├── openapi.json            # Complete OpenAPI 3.0.3 JSON specification
+│   └── openapi.yaml            # Complete OpenAPI 3.0.3 YAML specification
+│
+├── models/                     # [Models / Domain] Application Domain Models
+│   └── User.php                # In-memory User model with full CRUD operations (zero DB required)
+│
+├── routes/                     # [Routing Layer] Dedicated Route Definitions & Router Module
+│   ├── Router.php              # Core OOP Router engine (pattern matching, parameter parsing, reflection dispatch)
+│   ├── web.php                 # Web route definitions (GET /users, POST /users, management routes)
+│   └── api.php                 # REST API route definitions (/api/users CRUD endpoints)
+│
+├── views/                      # [View / Presentation] HTML5 Templates & Client Interfaces
+│   ├── main.html               # Alumni portal dashboard, responsive UI, dynamic JS directory consumer
+│   ├── about.html              # Department overview, academic history, accreditation, and faculty info
+│   ├── users.html              # User management UI view (directory table, stats, create modal)
+│   └── swagger.html            # Interactive Swagger UI API documentation explorer
+│
+└── tests/                      # [Quality Assurance] Automated & Declarative Test Suites
+    ├── api_tests.http          # RFC 2616 HTTP test collection for REST clients (VS Code / Postman)
+    └── test_endpoints.php      # Automated PHP CLI test suite (46 assertion checks across all routes & CRUD)
+```
+
+#### Component Categorization & Architectural Roles
+
+| Architectural Role | File / Directory | Key Responsibilities |
+|---|---|---|
+| **Front Controller** | `index.php` | • Intercepts all incoming HTTP requests via `.htaccess`<br>• Normalizes URI paths and handles subdirectory deployments (e.g., `/Alumni`)<br>• Initializes the core Router and connects the dedicated routes layer (`routes/web.php`, `routes/api.php`)<br>• Dispatches requests across route groups (`/`, `/about`, `/users`, `/api/users`, `/alumni`, `/swagger`, `/openapi.json`, `/auto/*`)<br>• Handles `POST` payload ingestion (JSON and Form)<br>• Implements response helpers: `renderView()`, `jsonResponse()`, `textResponse()`<br>• Content-negotiates 404 error responses (HTML vs. JSON) |
+| **Dedicated Routes Layer** | `routes/`<br>├── `Router.php`<br>├── `web.php`<br>└── `api.php` | • **`Router.php`**: Core OOP Router providing parametric regex pattern matching (`{id}`), HTTP verb dispatching (`GET`, `POST`, `PUT`, `DELETE`), and reflection-based controller method invocation<br>• **`web.php`**: Registers web routes mapping to `UserController` actions, specifically `GET /users` (Read operation) and `POST /users` (Create operation)<br>• **`api.php`**: Registers RESTful API routes mapping to `ApiUserController` actions |
+| **Web Controllers** | `controllers/UserController.php`<br>`alumni.php` | • **`UserController`**: Implements standard web request methods (`index()`, `show()`, `create()`, `store()`, `update()`, `delete()`) for user management, rendering HTML views and processing form submissions<br>• **`alumni.php`**: Resource controller querying alumni records, formatting JSON responses, and managing standby failover |
+| **API Controllers** | `controllers/ApiUserController.php` | • **`ApiUserController`**: Dedicated RESTful API controller providing complete JSON CRUD operations (`index()`, `show()`, `store()`, `update()`, `destroy()`) with appropriate HTTP status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found) |
+| **Views (Presentation Layer)** | `views/`<br>├── `main.html`<br>├── `about.html`<br>├── `users.html`<br>└── `swagger.html` | • **`main.html`**: Primary portal interface featuring Istanbul University institutional branding, KPI metrics, responsive styling, and client-side JavaScript that asynchronously consumes `GET /alumni` to render interactive profile cards<br>• **`about.html`**: Informational view presenting department background, accreditation standards, and faculty contact info<br>• **`users.html`**: User directory UI featuring live filtering, real-time metrics, interactive creation modal, and responsive actions<br>• **`swagger.html`**: Interactive Swagger UI client rendering the OpenAPI 3.0 specification |
+| **Model & Data Layer** | `models/User.php`<br>`database/schema.sql`<br>`config/db.php` | • **`models/User.php`**: Standalone in-memory User model providing full CRUD capabilities (`create()`, `all()`, `findById()`, `findByEmail()`, `update()`, `delete()`, `reset()`, `count()`) without requiring an external database connection, featuring data validation and optional session persistence<br>• **`database/schema.sql`**: Relational database model definition (`users`, `alumni_profiles`), foreign keys (`ON DELETE CASCADE`), indexes, and default seed fixtures<br>• **`config/db.php`**: Data Access Layer (DAL) establishing a singleton PDO instance with strict error modes (`ATTR_ERRMODE_EXCEPTION`) and connection timeout protection |
+| **API Specifications (Docs)** | `docs/openapi.json`<br>`docs/openapi.yaml` | • Complete **OpenAPI 3.0.3 / Swagger** contract definitions documenting all web endpoints under `/users` and REST API endpoints under `/api/users` with schema contracts, request bodies, and responses |
+| **Configuration (Config)** | `config/config.php` | • Centralized configuration returning environment variables (`development`/`production`), base URL, database connection parameters, and university institutional credits |
+| **Web Gateway / Public Entry** | `.htaccess` | • Apache URL rewriting engine acting as the single entry-point gateway<br>• Rewrites non-static file/directory requests to `index.php`, protecting internal directories and ensuring clean URLs |
+| **Test Suite** | `tests/test_endpoints.php`<br>`tests/api_tests.http` | • Automated integration test harness executing 46 test cases against the Front Controller, Routes Layer, User Model CRUD, Web Controllers, API endpoints, and OpenAPI spec schemas without requiring external test dependencies |
+
+#### MVC Component Interaction & Request Lifecycle
+
+The diagram and steps below trace how Models, Views, and Controllers collaborate to fulfill client requests:
+
+```text
+  ┌─────────────────────────────────────────────────────────────────────────────────┐
+  │                              Client Browser / API Client                        │
+  └────────────────────────────────────────┬────────────────────────────────────────┘
+                                           │
+                        1. HTTP Request    ▼   5. HTML Page / JSON Response
+  ┌─────────────────────────────────────────────────────────────────────────────────┐
+  │                        Web Server Gateway (.htaccess)                           │
+  └────────────────────────────────────────┬────────────────────────────────────────┘
+                                           │
+                        2. Rewrite to      ▼
+  ┌─────────────────────────────────────────────────────────────────────────────────┐
+  │                      Front Controller & Router (index.php)                      │
+  │  • Normalizes request method and URI                                            │
+  │  • Dispatches routes: /, /about, /users, /api/users, /alumni, /auto/*           │
+  └─────────────┬───────────────────┬───────────────────────┬───────────────────────┘
+                │                   │                       │
+      Route: /  │      Route: /users│     Route: /api/users │        Route: /alumni
+      or /about │                   │                       │                       │
+                ▼                   ▼                       ▼                       ▼
+  ┌──────────────────┐  ┌───────────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │ View Dispatcher  │  │    UserController     │  │ ApiUserController│  │    alumni.php    │
+  │  (renderView())  │  │   (Web Controller)    │  │ (REST Controller)│  │ (Resource Ctrl)  │
+  └────────┬─────────┘  └───────────┬───────────┘  └────────┬─────────┘  └────────┬─────────┘
+           │                        │                       │                     │
+           │                        │ 3. Execute CRUD       │ 3. Execute CRUD     │ 3. Query
+           │                        ▼                       ▼                     ▼
+           │            ┌─────────────────────────────────────────────┐  ┌──────────────────┐
+           │            │            User Model (In-Memory)           │  │  Model / DAL     │
+           │            │              (models/User.php)              │  │ (config/db.php)  │
+           │            │  • create()   • all()        • findById()   │  └────────┬─────────┘
+           │            │  • update()   • delete()     • reset()      │           │
+           │            └─────────────────────┬───────────────────────┘           ▼
+           │                                  │                          ┌──────────────────┐
+           │                        4. Return │                          │  MySQL Database  │
+           │                           Entity │                          │  or Standby Data │
+           │                                  │                          └────────┬─────────┘
+           ▼                                  ▼                                   │
+  ┌──────────────────┐                        │                                   │
+  │   Views Layer    │<───────────────────────┘                                   │
+  │  (views/*.html)  │                                                            │
+  └────────┬─────────┘                                                            │
+           │                                                                      │
+           └──────────────────────────────────┬───────────────────────────────────┘
+                                              │
+                                              ▼
+                                 Client Receives Response
+                                              │
+                                              │ Dynamic client-side fetch('/alumni')
+                                              └──────> Renders Directory Cards
+```
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client (Browser / API)
+    participant Gateway as Web Gateway (.htaccess)
+    participant Router as Front Controller (index.php)
+    participant WebCtrl as UserController (Web)
+    participant ApiCtrl as ApiUserController (API)
+    participant Model as User Model (In-Memory)
+    participant View as View Layer (views/*.html)
+
+    %% Flow 1: Web Request
+    rect rgb(240, 248, 255)
+    Note over Client,View: Flow 1: Web Management Request (e.g., GET /users or POST /users)
+    Client->>Gateway: GET /users or POST /users
+    Gateway->>Router: Rewrite to index.php
+    Router->>WebCtrl: index() or store($postData)
+    WebCtrl->>Model: User::all() or User::create($data)
+    Model-->>WebCtrl: User entities
+    WebCtrl->>View: Render views/users.html with user data
+    View-->>Client: HTTP 200 (HTML5 View)
+    end
+
+    %% Flow 2: REST API CRUD Request
+    rect rgb(255, 250, 240)
+    Note over Client,Model: Flow 2: REST API JSON CRUD (e.g., POST /api/users, GET /api/users)
+    Client->>Gateway: POST /api/users {JSON payload}
+    Gateway->>Router: Rewrite to index.php
+    Router->>ApiCtrl: store($payload)
+    ApiCtrl->>Model: User::create($payload)
+    Model-->>ApiCtrl: Created User Entity
+    ApiCtrl-->>Client: HTTP 201 application/json
+    end
+
+    %% Flow 3: Single Resource Lookup
+    rect rgb(245, 255, 245)
+    Note over Client,Model: Flow 3: API Read / Update / Delete by ID
+    Client->>Gateway: GET /api/users/1
+    Gateway->>Router: Rewrite to index.php
+    Router->>ApiCtrl: show(1)
+    ApiCtrl->>Model: User::findById(1)
+    Model-->>ApiCtrl: User Entity or null
+    ApiCtrl-->>Client: HTTP 200 JSON (or 404 if not found)
+    end
+```
+
+##### Interaction Flow Details
+
+1. **Request Ingestion & Gateway (`.htaccess` -> `index.php`)**:
+   Every incoming HTTP request is received by Apache. Unless the request directly points to an existing physical file or directory (`!-f`, `!-d`), `.htaccess` transparently routes the request to `index.php` (Front Controller pattern).
+
+2. **Routing & Dispatching (`index.php`)**:
+   The Front Controller normalizes the path and routes to the appropriate handler:
+   - **Static / Template Routes (`/`, `/about`, `/auto/main`)**: Dispatched to `renderView()` to load and stream HTML view templates.
+   - **Web User Management (`/users`, `/users/create`, `/users/{id}`)**: Dispatched to `UserController` methods (`index`, `create`, `show`, `store`, `update`, `delete`).
+   - **REST API User CRUD (`/api/users`, `/api/users/{id}`)**: Dispatched to `ApiUserController` methods (`index`, `show`, `store`, `update`, `destroy`).
+   - **Alumni API (`/alumni`)**: Dispatched to `alumni.php`.
+   - **Parameterized Routes (`/auto/hello/{name}`, `/auto/sum/{a}/{b}`)**: Route parameters are extracted via regular expressions, sanitized, validated, and processed into JSON or text responses.
+   - **POST Skeleton (`/auto`)**: Handles generic test payload validation.
+
+3. **In-Memory Model Operations (`models/User.php`)**:
+   Controllers interact directly with the in-memory `User` domain model:
+   - `User::all()`: Retrieves all active user records.
+   - `User::findById($id)`: Fetches a single user by primary ID.
+   - `User::create($data)`: Validates mandatory attributes (`email`, `first_name`, `last_name`, `role`), guarantees email uniqueness, assigns auto-increment IDs, and persists the record.
+   - `User::update($id, $data)`: Updates fields and timestamps on existing records.
+   - `User::delete($id)`: Removes records safely.
+   - State synchronization: The model operates without any database engine, holding data in-memory with automatic session backing across web requests.
+
+4. **Response Delivery (JSON & HTML)**:
+   - `UserController` passes data to `views/users.html`, injecting JSON state and flash notices into the HTML output.
+   - `ApiUserController` returns RFC-compliant JSON responses with precise HTTP status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found).
+
+#### Swagger / OpenAPI 3.0 Documentation
+
+The portal provides end-to-end OpenAPI 3.0.3 and Swagger specifications documenting both Web and REST API interfaces:
+
+| Access Point | Format / Description | URL Endpoint |
+|---|---|---|
+| **Interactive Swagger UI** | Rich web interface for inspecting and testing endpoints directly in the browser | `http://localhost:8000/swagger` or `http://localhost:8000/docs` |
+| **OpenAPI Specification (JSON)** | Machine-readable OpenAPI 3.0.3 contract in JSON | `http://localhost:8000/openapi.json` (File: [`docs/openapi.json`](docs/openapi.json)) |
+| **OpenAPI Specification (YAML)** | Human-readable OpenAPI 3.0.3 contract in YAML | `http://localhost:8000/openapi.yaml` (File: [`docs/openapi.yaml`](docs/openapi.yaml)) |
+
+##### Documented Endpoints Summary:
+- **Web Management (`/users`)**:
+  - `GET /users`: List users view with searchable cards and metric badges
+  - `GET /users/create`: Create user form modal view
+  - `POST /users`: Form submission endpoint to create user
+  - `GET /users/{id}`: Detailed user profile view
+  - `POST /users/{id}/update`: Form submission endpoint to update user
+  - `POST /users/{id}/delete`: Form submission endpoint to delete user
+- **REST API (`/api/users`)**:
+  - `GET /api/users`: List all users (`UserListResponse` schema)
+  - `POST /api/users`: Create user (`UserCreateInput` -> `UserSingleResponse`, HTTP 201)
+  - `GET /api/users/{id}`: Get single user (`UserSingleResponse`, HTTP 200 or 404)
+  - `PUT /api/users/{id}`: Update user (`UserUpdateInput` -> `UserSingleResponse`, HTTP 200)
+  - `DELETE /api/users/{id}`: Delete user (`SuccessMessageResponse`, HTTP 200 or 404)
+- **Alumni Directory (`/alumni`)**:
+  - `GET /alumni`: List alumni profiles (`AlumniListResponse`, HTTP 200)
+- **Core Router Utilities (`/auto`)**:
+  - `GET /auto`, `POST /auto`, `GET /auto/hello/{name}`, `GET /auto/sum/{a}/{b}`
 
 ---
 

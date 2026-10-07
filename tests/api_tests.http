@@ -66,3 +66,46 @@ POST {{baseUrl}}/auto
 Content-Type: application/x-www-form-urlencoded
 
 action=form_submit&name=Senol&department=MIS
+
+### 15. Web: List Users View (GET /users)
+GET {{baseUrl}}/users
+Accept: text/html
+
+### 16. Web: Form Submission - Create User (POST /users)
+POST {{baseUrl}}/users
+Content-Type: application/x-www-form-urlencoded
+
+first_name=Mehmet&last_name=Celik&email=mehmet.celik@example.com&role=alumni&is_verified=1
+
+### 17. API: List All Users (GET /api/users)
+GET {{baseUrl}}/api/users
+Accept: application/json
+
+### 18. API: Get Single User By ID (GET /api/users/1)
+GET {{baseUrl}}/api/users/1
+Accept: application/json
+
+### 19. API: Create New User (POST /api/users)
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+    "first_name": "Selin",
+    "last_name": "Acar",
+    "email": "selin.acar@example.com",
+    "role": "student",
+    "is_verified": 1
+}
+
+### 20. API: Update Existing User (PUT /api/users/1)
+PUT {{baseUrl}}/api/users/1
+Content-Type: application/json
+
+{
+    "first_name": "Admin (Updated)",
+    "role": "super_admin"
+}
+
+### 21. API: Delete User (DELETE /api/users/5)
+DELETE {{baseUrl}}/api/users/5
+Accept: application/json

@@ -1,0 +1,625 @@
+openapi: 3.0.3
+info:
+  title: Istanbul University MIS Alumni Portal API
+  description: >-
+    Comprehensive OpenAPI / Swagger specification for the Istanbul University Faculty
+    of Economics — Management Information Systems (MIS) Alumni Portal & Tracking System.
+    Documents the MVC architecture web endpoints, RESTful JSON API CRUD operations for
+    Users, and Alumni directory endpoints.
+  version: 1.1.0
+  contact:
+    name: Istanbul University MIS Department
+    email: mis-alumni@istanbul.edu.tr
+    url: https://www.istanbul.edu.tr/
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8000
+    description: Local PHP Built-in Development Server
+  - url: http://localhost/Alumni
+    description: Local Apache / XAMPP Subdirectory Deployment
+tags:
+  - name: Users (REST API)
+    description: CRUD endpoints for User entities operated by ApiUserController with in-memory persistence
+  - name: Users (Web Management)
+    description: Web request endpoints operated by UserController rendering HTML views and processing form submissions
+  - name: Alumni Directory
+    description: Alumni tracking, public directory search, and mentorship endpoints
+  - name: Core & Router Utilities
+    description: Router verification, arithmetic, and health-check endpoints under /auto
+paths:
+  /api/users:
+    get:
+      tags:
+        - Users (REST API)
+      summary: List all users
+      description: Retrieves an array of all registered users from the in-memory User model.
+      operationId: apiListUsers
+      responses:
+        '200':
+          description: Successful retrieval of user list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+    post:
+      tags:
+        - Users (REST API)
+      summary: Create a new user
+      description: Validates payload, creates a user in the in-memory User model, and returns the created record with an auto-increment ID.
+      operationId: apiCreateUser
+      requestBody:
+        required: true
+        description: User creation attributes
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateInput'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSingleResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Numeric ID of the user
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags:
+        - Users (REST API)
+      summary: Get user by ID
+      description: Fetches single user details by ID from the in-memory User model.
+      operationId: apiGetUserById
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSingleResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Users (REST API)
+      summary: Update an existing user
+      description: Updates fields on an existing user record. Supports partial updates.
+      operationId: apiUpdateUser
+      requestBody:
+        required: true
+        description: Fields to update
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSingleResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Users (REST API)
+      summary: Delete a user
+      description: Deletes a user record by ID from memory.
+      operationId: apiDeleteUser
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users:
+    get:
+      tags:
+        - Users (Web Management)
+      summary: User Management Dashboard View
+      description: Renders the HTML interface displaying all users in a searchable, responsive directory table with live stats.
+      operationId: webListUsers
+      responses:
+        '200':
+          description: HTML page rendered from views/users.html
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - Users (Web Management)
+      summary: Create user via Web Form
+      description: Handles HTML form submission to create a new user and re-renders the dashboard with success or error notifications.
+      operationId: webStoreUser
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserFormInput'
+      responses:
+        '200':
+          description: HTML page rendered with result notification
+          content:
+            text/html:
+              schema:
+                type: string
+  /users/create:
+    get:
+      tags:
+        - Users (Web Management)
+      summary: Create User Form View
+      description: Renders the user management view with the creation modal/form opened.
+      operationId: webCreateUserForm
+      responses:
+        '200':
+          description: HTML form view
+          content:
+            text/html:
+              schema:
+                type: string
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags:
+        - Users (Web Management)
+      summary: View Single User Profile View
+      description: Renders HTML view displaying specific user details.
+      operationId: webShowUser
+      responses:
+        '200':
+          description: HTML user profile view
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: HTML error page (User not found)
+          content:
+            text/html:
+              schema:
+                type: string
+  /users/{id}/update:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    post:
+      tags:
+        - Users (Web Management)
+      summary: Update user via Web Form
+      description: Processes form submission to update an existing user and returns HTML view.
+      operationId: webUpdateUser
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserFormInput'
+      responses:
+        '200':
+          description: HTML page rendered with result notification
+          content:
+            text/html:
+              schema:
+                type: string
+  /users/{id}/delete:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    post:
+      tags:
+        - Users (Web Management)
+      summary: Delete user via Web Form
+      description: Processes form submission to delete a user and returns HTML view with confirmation notice.
+      operationId: webDeleteUser
+      responses:
+        '200':
+          description: HTML page rendered with deletion notification
+          content:
+            text/html:
+              schema:
+                type: string
+  /alumni:
+    get:
+      tags:
+        - Alumni Directory
+      summary: Retrieve Alumni Directory
+      description: Queries the MySQL database for alumni records. If the database is offline or unmigrated, returns verified standby mock records.
+      operationId: getAlumniDirectory
+      responses:
+        '200':
+          description: Alumni directory records retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlumniListResponse'
+  /auto:
+    get:
+      tags:
+        - Core & Router Utilities
+      summary: Router Health Check
+      description: Returns plain text 'ok'.
+      operationId: autoRoot
+      responses:
+        '200':
+          description: Health check confirmation
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+    post:
+      tags:
+        - Core & Router Utilities
+      summary: POST Skeleton Handler
+      description: Accepts JSON or Form payloads and echoes received data in a standardized wrapper.
+      operationId: autoPostSkeleton
+      requestBody:
+        content:
+          application/json: {}
+          application/x-www-form-urlencoded: {}
+      responses:
+        '200':
+          description: Echoed POST response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                  received_payload:
+                    type: object
+                  timestamp:
+                    type: string
+  /auto/hello/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          example: senol
+    get:
+      tags:
+        - Core & Router Utilities
+      summary: Dynamic Greeting
+      description: Returns greeting text with sanitized dynamic name parameter.
+      operationId: autoGreeting
+      responses:
+        '200':
+          description: Greeting text
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Hello, senol!
+  /auto/sum/{number1}/{number2}:
+    parameters:
+      - name: number1
+        in: path
+        required: true
+        schema:
+          type: number
+          example: 10
+      - name: number2
+        in: path
+        required: true
+        schema:
+          type: number
+          example: 5
+    get:
+      tags:
+        - Core & Router Utilities
+      summary: Arithmetic Sum Calculator
+      description: Computes sum of two numeric path parameters with input validation.
+      operationId: autoSum
+      responses:
+        '200':
+          description: Calculated sum
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sum:
+                    type: number
+                    example: 15
+        '400':
+          description: Invalid non-numeric input validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - first_name
+        - last_name
+        - role
+        - is_verified
+      properties:
+        id:
+          type: integer
+          description: Unique auto-increment identifier
+          example: 1
+        email:
+          type: string
+          format: email
+          description: Institutional or personal email address
+          example: alumni.mert@example.com
+        first_name:
+          type: string
+          description: First name of user
+          example: Mert
+        last_name:
+          type: string
+          description: Last name of user
+          example: Yılmaz
+        role:
+          type: string
+          enum:
+            - super_admin
+            - faculty_admin
+            - alumni
+            - student
+          description: Role classification within the portal ecosystem
+          example: alumni
+        is_verified:
+          type: integer
+          enum:
+            - 0
+            - 1
+          description: 1 if verified against student registrar records, 0 otherwise
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-01-15 11:30:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-01-15 11:30:00'
+    UserCreateInput:
+      type: object
+      required:
+        - email
+        - first_name
+        - last_name
+      properties:
+        email:
+          type: string
+          format: email
+          example: can.aydin@example.com
+        first_name:
+          type: string
+          example: Can
+        last_name:
+          type: string
+          example: Aydın
+        role:
+          type: string
+          enum:
+            - super_admin
+            - faculty_admin
+            - alumni
+            - student
+          default: alumni
+          example: alumni
+        is_verified:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 0
+          example: 1
+    UserUpdateInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: mert.updated@example.com
+        first_name:
+          type: string
+          example: Mert
+        last_name:
+          type: string
+          example: Yılmaz
+        role:
+          type: string
+          enum:
+            - super_admin
+            - faculty_admin
+            - alumni
+            - student
+          example: alumni
+        is_verified:
+          type: integer
+          enum:
+            - 0
+            - 1
+          example: 1
+    UserFormInput:
+      type: object
+      required:
+        - email
+        - first_name
+        - last_name
+      properties:
+        first_name:
+          type: string
+          example: Mehmet
+        last_name:
+          type: string
+          example: Çelik
+        email:
+          type: string
+          format: email
+          example: mehmet.celik@example.com
+        role:
+          type: string
+          enum:
+            - super_admin
+            - faculty_admin
+            - alumni
+            - student
+          example: alumni
+        is_verified:
+          type: string
+          example: '1'
+    UserListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        count:
+          type: integer
+          example: 5
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    UserSingleResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: User created successfully
+        data:
+          $ref: '#/components/schemas/User'
+    SuccessMessageResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: User with ID 1 deleted successfully
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: User with ID 999 not found
+    AlumniProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        first_name:
+          type: string
+          example: Mert
+        last_name:
+          type: string
+          example: Yılmaz
+        email:
+          type: string
+          example: alumni.mert@example.com
+        graduation_year:
+          type: integer
+          example: 2020
+        degree_level:
+          type: string
+          example: B.Sc.
+        current_company:
+          type: string
+          example: Trendyol Group
+        current_title:
+          type: string
+          example: Senior Cloud Data Engineer
+        industry:
+          type: string
+          example: E-Commerce / Cloud
+        location:
+          type: string
+          example: Istanbul, Turkey
+        is_available_for_mentoring:
+          type: integer
+          example: 1
+    AlumniListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        source:
+          type: string
+          example: database
+        message:
+          type: string
+          example: Alumni records retrieved successfully.
+        count:
+          type: integer
+          example: 3
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlumniProfile'
