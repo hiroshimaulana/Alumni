@@ -623,3 +623,79 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AlumniProfile'
+    JobPosting:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_name:
+          type: string
+        title:
+          type: string
+        employment_type:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+    JobPostingCreateInput:
+      type: object
+      required:
+        - company_name
+        - title
+        - description
+      properties:
+        company_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+    JobPostingListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobPosting'
+    Application:
+      type: object
+      properties:
+        id:
+          type: integer
+        job_posting_id:
+          type: integer
+        applicant_name:
+          type: string
+        applicant_email:
+          type: string
+        status:
+          type: string
+    ApplicationCreateInput:
+      type: object
+      required:
+        - job_posting_id
+        - applicant_name
+        - applicant_email
+      properties:
+        job_posting_id:
+          type: integer
+        applicant_name:
+          type: string
+        applicant_email:
+          type: string
+    ApplicationListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'

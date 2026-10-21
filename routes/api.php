@@ -3,38 +3,58 @@
  * Istanbul University MIS Alumni Portal
  * REST API Route Definitions
  *
- * Dedicated routes layer registering JSON endpoints mapping to ApiUserController.
+ * Registers JSON API endpoints mapping to API controllers for:
+ * 1. Users CRUD (/api/users)
+ * 2. Job Postings CRUD & Nested Endpoints (/api/job-postings, /api/companies/{id}/job-postings, /api/users/{id}/job-postings)
+ * 3. Applications CRUD & Nested Endpoints (/api/applications, /api/job-postings/{id}/applications, /api/users/{id}/applications)
  */
 
 return function (Router $router): void {
     // -------------------------------------------------------------
-    // REST API User CRUD Endpoints
+    // REST API: Users CRUD
     // -------------------------------------------------------------
+    $router->get('/api/users',                 ['ApiUserController', 'index']);
+    $router->post('/api/users',                ['ApiUserController', 'store']);
+    $router->get('/api/users/{id}',            ['ApiUserController', 'show']);
+    $router->put('/api/users/{id}',            ['ApiUserController', 'update']);
+    $router->patch('/api/users/{id}',          ['ApiUserController', 'update']);
+    $router->post('/api/users/{id}',           ['ApiUserController', 'update']);
+    $router->post('/api/users/{id}/update',    ['ApiUserController', 'update']);
+    $router->delete('/api/users/{id}',         ['ApiUserController', 'destroy']);
+    $router->post('/api/users/{id}/delete',    ['ApiUserController', 'destroy']);
 
-    // GET /api/users -> List all users (JSON)
-    $router->get('/api/users', ['ApiUserController', 'index']);
+    // -------------------------------------------------------------
+    // REST API: Job Postings (Direct CRUD)
+    // -------------------------------------------------------------
+    $router->get('/api/job-postings',              ['ApiJobPostingController', 'index']);
+    $router->post('/api/job-postings',             ['ApiJobPostingController', 'store']);
+    $router->get('/api/job-postings/{id}',         ['ApiJobPostingController', 'show']);
+    $router->put('/api/job-postings/{id}',         ['ApiJobPostingController', 'update']);
+    $router->patch('/api/job-postings/{id}',       ['ApiJobPostingController', 'update']);
+    $router->delete('/api/job-postings/{id}',      ['ApiJobPostingController', 'destroy']);
+    $router->post('/api/job-postings/{id}/delete', ['ApiJobPostingController', 'destroy']);
 
-    // POST /api/users -> Create user (JSON)
-    $router->post('/api/users', ['ApiUserController', 'store']);
+    // -------------------------------------------------------------
+    // REST API: Job Postings (Nested Routes)
+    // -------------------------------------------------------------
+    $router->get('/api/companies/{id}/job-postings', ['ApiJobPostingController', 'byCompany']);
+    $router->get('/api/users/{id}/job-postings',     ['ApiJobPostingController', 'byUser']);
 
-    // GET /api/users/{id} -> Get single user by ID (JSON)
-    $router->get('/api/users/{id}', ['ApiUserController', 'show']);
+    // -------------------------------------------------------------
+    // REST API: Applications (Direct CRUD)
+    // -------------------------------------------------------------
+    $router->get('/api/applications',              ['ApiApplicationController', 'index']);
+    $router->post('/api/applications',             ['ApiApplicationController', 'store']);
+    $router->get('/api/applications/{id}',         ['ApiApplicationController', 'show']);
+    $router->put('/api/applications/{id}',         ['ApiApplicationController', 'update']);
+    $router->patch('/api/applications/{id}',       ['ApiApplicationController', 'update']);
+    $router->delete('/api/applications/{id}',      ['ApiApplicationController', 'destroy']);
+    $router->post('/api/applications/{id}/delete', ['ApiApplicationController', 'destroy']);
 
-    // PUT /api/users/{id} -> Update user (JSON)
-    $router->put('/api/users/{id}', ['ApiUserController', 'update']);
-
-    // PATCH /api/users/{id} -> Partial update user (JSON)
-    $router->patch('/api/users/{id}', ['ApiUserController', 'update']);
-
-    // POST /api/users/{id} -> Fallback update user (JSON)
-    $router->post('/api/users/{id}', ['ApiUserController', 'update']);
-
-    // POST /api/users/{id}/update -> Explicit update user (JSON)
-    $router->post('/api/users/{id}/update', ['ApiUserController', 'update']);
-
-    // DELETE /api/users/{id} -> Delete user (JSON)
-    $router->delete('/api/users/{id}', ['ApiUserController', 'destroy']);
-
-    // POST /api/users/{id}/delete -> Explicit delete user (JSON)
-    $router->post('/api/users/{id}/delete', ['ApiUserController', 'destroy']);
+    // -------------------------------------------------------------
+    // REST API: Applications (Nested Routes)
+    // -------------------------------------------------------------
+    $router->get('/api/job-postings/{id}/applications',  ['ApiApplicationController', 'byJobPosting']);
+    $router->post('/api/job-postings/{id}/applications', ['ApiApplicationController', 'apply']);
+    $router->get('/api/users/{id}/applications',         ['ApiApplicationController', 'byUser']);
 };

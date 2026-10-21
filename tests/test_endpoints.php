@@ -243,6 +243,145 @@ class ApiTester {
         $res = $this->simulateRequest('POST', '/users', $postPayload, ['CONTENT_TYPE' => 'application/x-www-form-urlencoded']);
         $this->assert("Front Controller dispatches POST /users via routes layer to create user", strpos($res['body'], 'created successfully') !== false && strpos($res['body'], 'RouterTest') !== false);
 
+        // Test 38: Career Services: JobPosting Model CRUD & relationships
+        require_once __DIR__ . '/../models/JobPosting.php';
+        JobPosting::reset();
+        $initialJobCount = JobPosting::count();
+        $this->assert("JobPosting Model initializes with seeded opportunities", $initialJobCount >= 3);
+        $newJob = JobPosting::create([
+            'posted_by_user_id' => 1,
+            'company_name'      => 'Test Corp',
+            'company_id'        => 999,
+            'title'             => 'Test Engineer',
+            'description'       => 'Test description for unit testing.',
+            'employment_type'   => 'full_time',
+            'location'          => 'Istanbul, Turkey',
+            'experience_level'  => 'entry'
+        ]);
+        $this->assert("JobPosting Model creates record with auto-increment ID", $newJob['id'] > 0 && $newJob['title'] === 'Test Engineer');
+        $jobUser = JobPosting::user($newJob['id']);
+        $this->assert("JobPosting belongsTo User relationship resolves correctly", $jobUser !== null && (int)$jobUser['id'] === 1);
+
+        // Test 39: Application Tracking: Application Model CRUD & relationships
+        require_once __DIR__ . '/../models/Application.php';
+        Application::reset();
+        $initialAppCount = Application::count();
+        $this->assert("Application Model initializes with seeded dossiers", $initialAppCount >= 2);
+        $newApp = Application::create([
+            'job_posting_id'  => 1,
+            'user_id'         => 3,
+            'applicant_name'  => 'Test Candidate',
+            'applicant_email' => 'test.candidate@ogr.iu.edu.tr',
+            'status'          => 'submitted'
+        ]);
+        $this->assert("Application Model creates application dossier", $newApp['id'] > 0 && $newApp['applicant_name'] === 'Test Candidate');
+        $appJob = Application::jobPosting($newApp['id']);
+        $this->assert("Application belongsTo JobPosting relationship resolves correctly", $appJob !== null && (int)$appJob['id'] === 1);
+        $appUser = Application::user($newApp['id']);
+        $this->assert("Application belongsTo User relationship resolves correctly", $appUser !== null && (int)$appUser['id'] === 3);
+
+        // Test 40: Web: GET /job-postings renders Career Hub view
+        $res = $this->simulateRequest('GET', '/job-postings');
+        $this->assert("GET /job-postings renders Career Hub view", strpos($res['body'], 'Career Hub & Job Postings') !== false && strpos($res['body'], 'stat-total') !== false);
+
+        // Test 41: Web: GET /job-postings/create renders creation modal
+        $res = $this->simulateRequest('GET', '/job-postings/create');
+        $this->assert("GET /job-postings/create renders opportunity creation modal", strpos($res['body'], 'Post a New Opportunity') !== false);
+
+        // Test 42: Web: POST /job-postings creates opportunity via form
+        $jobForm = http_build_query([
+            'company_name'    => 'IU Tech Park',
+            'company_id'      => '555',
+            'title'           => 'Web Developer Fellow',
+            'employment_type' => 'full_time',
+            'experience_level'=> 'entry',
+            'location'        => 'Istanbul, Turkey',
+            'description'     => 'Work on faculty systems.'
+        ]);
+        $res = $this->simulateRequest('POST', '/job-postings', $jobForm, ['CONTENT_TYPE' => 'application/x-www-form-urlencoded']);
+        $this->assert("POST /job-postings creates opportunity and renders success notice", strpos($res['body'], 'created successfully') !== false);
+
+        // Test 43: Web: GET /job-postings/1 renders single job view
+        $res = $this->simulateRequest('GET', '/job-postings/1');
+        $this->assert("GET /job-postings/1 renders job details", strpos($res['body'], 'Trendyol Group') !== false || strpos($res['body'], 'Cloud Data Engineer') !== false);
+
+        // Test 44: Web: GET /applications renders applications hub
+        $res = $this->simulateRequest('GET', '/applications');
+        $this->assert("GET /applications renders Applications Hub view", strpos($res['body'], 'Candidate Applications Hub') !== false);
+
+        // Test 45: API: GET /api/job-postings returns JSON opportunities
+        $res = $this->simulateRequest('GET', '/api/job-postings');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/job-postings returns JSON array", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
+
+        // Test 46: API: GET /api/job-postings/1 returns single job JSON
+        $res = $this->simulateRequest('GET', '/api/job-postings/1');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/job-postings/1 returns job object", isset($json['data']['id']) && (int)$json['data']['id'] === 1);
+
+        // Test 47: API: POST /api/job-postings creates job via JSON
+        $newApiJob = json_encode([
+            'posted_by_user_id' => 1,
+            'company_name'      => 'Turkcell Technology',
+            'company_id'        => 105,
+            'title'             => 'BI Analyst Graduate',
+            'description'       => 'Business intelligence data visualization and SQL analytics.',
+            'employment_type'   => 'full_time',
+            'location'          => 'Istanbul, Turkey',
+            'experience_level'  => 'entry'
+        ]);
+        $res = $this->simulateRequest('POST', '/api/job-postings', $newApiJob, ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/job-postings creates job and returns 201 status", isset($json['status']) && $json['status'] === 'success' && ($json['data']['title'] ?? '') === 'BI Analyst Graduate');
+
+        // Test 48: API: PUT /api/job-postings/1 updates job via JSON
+        $updateJobPayload = json_encode(['title' => 'Senior Cloud Data Platform Engineer']);
+        $res = $this->simulateRequest('PUT', '/api/job-postings/1', $updateJobPayload, ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("PUT /api/job-postings/1 updates job via API", isset($json['status']) && $json['status'] === 'success' && ($json['data']['title'] ?? '') === 'Senior Cloud Data Platform Engineer');
+
+        // Test 49: Nested API: GET /api/companies/101/job-postings
+        $res = $this->simulateRequest('GET', '/api/companies/101/job-postings');
+        $json = json_decode($res['body'], true);
+        $this->assert("Nested GET /api/companies/101/job-postings returns company listings", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
+
+        // Test 50: Nested API: GET /api/users/1/job-postings
+        $res = $this->simulateRequest('GET', '/api/users/1/job-postings');
+        $json = json_decode($res['body'], true);
+        $this->assert("Nested GET /api/users/1/job-postings returns user posted jobs", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
+
+        // Test 51: API: GET /api/applications returns JSON applications
+        $res = $this->simulateRequest('GET', '/api/applications');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/applications returns JSON array", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
+
+        // Test 52: API: GET /api/applications/1 returns single application
+        $res = $this->simulateRequest('GET', '/api/applications/1');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/applications/1 returns application object", isset($json['data']['id']) && (int)$json['data']['id'] === 1);
+
+        // Test 53: API: POST /api/applications submits application via JSON
+        $newApiApp = json_encode([
+            'job_posting_id'  => 2,
+            'user_id'         => 3,
+            'applicant_name'  => 'API Candidate',
+            'applicant_email' => 'api.candidate@istanbul.edu.tr',
+            'cover_letter'    => 'Strong experience in business systems analysis.'
+        ]);
+        $res = $this->simulateRequest('POST', '/api/applications', $newApiApp, ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/applications submits application and returns 201 status", isset($json['status']) && $json['status'] === 'success' && ($json['data']['applicant_name'] ?? '') === 'API Candidate');
+
+        // Test 54: Nested API: GET /api/job-postings/1/applications
+        $res = $this->simulateRequest('GET', '/api/job-postings/1/applications');
+        $json = json_decode($res['body'], true);
+        $this->assert("Nested GET /api/job-postings/1/applications returns applications for job", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
+
+        // Test 55: Nested API: GET /api/users/4/applications
+        $res = $this->simulateRequest('GET', '/api/users/4/applications');
+        $json = json_decode($res['body'], true);
+        $this->assert("Nested GET /api/users/4/applications returns user application history", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
+
         echo "\n--------------------------------------------------------\n";
         echo "Results: {$this->passed} Passed, {$this->failed} Failed\n";
         echo "========================================================\n";

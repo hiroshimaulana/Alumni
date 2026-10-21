@@ -66,8 +66,14 @@ function textResponse(string $text, int $statusCode = 200): void {
 
 // Load MVC components
 require_once __DIR__ . '/models/User.php';
+require_once __DIR__ . '/models/JobPosting.php';
+require_once __DIR__ . '/models/Application.php';
 require_once __DIR__ . '/controllers/UserController.php';
 require_once __DIR__ . '/controllers/ApiUserController.php';
+require_once __DIR__ . '/controllers/JobPostingController.php';
+require_once __DIR__ . '/controllers/ApiJobPostingController.php';
+require_once __DIR__ . '/controllers/ApplicationController.php';
+require_once __DIR__ . '/controllers/ApiApplicationController.php';
 
 // Start session if available for in-memory model state persistence across web requests
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
