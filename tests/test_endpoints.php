@@ -382,6 +382,233 @@ class ApiTester {
         $json = json_decode($res['body'], true);
         $this->assert("Nested GET /api/users/4/applications returns user application history", isset($json['status']) && $json['status'] === 'success' && is_array($json['data']));
 
+        // Test 56: Error Handling: Undefined Web Route (GET /invalid-endpoint) returns 404 Not Found view
+        $res = $this->simulateRequest('GET', '/invalid-endpoint');
+        $this->assert("GET /invalid-endpoint returns 404 status", $res['status'] === 404, "Expected status 404, got: {$res['status']}");
+        $this->assert("GET /invalid-endpoint returns 404 Not Found JSON error with path", strpos($res['body'], '404 Not Found') !== false && strpos($res['body'], '/invalid-endpoint') !== false);
+        $this->assert("GET /invalid-endpoint does not fall back to home view", strpos($res['body'], 'Career Opportunities & Academic Directory') === false);
+
+        // Test 57: Error Handling: Undefined API Route (GET /api/invalid-endpoint) returns 404 JSON error
+        $res = $this->simulateRequest('GET', '/api/invalid-endpoint');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/invalid-endpoint returns 404 status", $res['status'] === 404);
+        $this->assert("GET /api/invalid-endpoint returns JSON error response", isset($json['status']) && $json['status'] === 'error' && isset($json['error']) && $json['error'] === '404 Not Found');
+
+        // Test 58: Error Handling: Undefined POST Route (POST /invalid-endpoint) returns 404 Not Found
+        $res = $this->simulateRequest('POST', '/invalid-endpoint', json_encode(['foo' => 'bar']), ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /invalid-endpoint returns 404 status instead of 200 skeleton", $res['status'] === 404);
+        $this->assert("POST /invalid-endpoint contains 404 error message", isset($json['status']) && $json['status'] === 'error');
+
+        // Test 59: Route Matching Validation: Router methods hasRoute() and isDefinedRoute()
+        $this->assert("Router::hasRoute('GET', '/users') validates existing route", $testRouter->hasRoute('GET', '/users'));
+        $this->assert("Router::hasRoute('GET', '/invalid-endpoint') rejects invalid route", !$testRouter->hasRoute('GET', '/invalid-endpoint'));
+        $this->assert("Router::isDefinedRoute('/invalid-endpoint') confirms path is undefined", !$testRouter->isDefinedRoute('/invalid-endpoint'));
+
+        // Test 60: Static Asset Validation: Valid static file (GET /docs/openapi.json) returns 200 OK
+        $res = $this->simulateRequest('GET', '/docs/openapi.json');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /docs/openapi.json returns 200 and valid JSON specification", $res['status'] === 200 && isset($json['openapi']));
+
+        // Test 61: Static Asset Validation: Missing asset (GET /assets/missing.css) returns 404 Not Found
+        $res = $this->simulateRequest('GET', '/assets/missing.css');
+        $this->assert("GET /assets/missing.css returns 404 status and error view", $res['status'] === 404 && strpos($res['body'], '404 Not Found') !== false);
+
+        // Test 62: Method Validation: POST to GET-only route (/users/create) returns 405 Method Not Allowed
+        $res = $this->simulateRequest('POST', '/users/create');
+        $this->assert("POST /users/create returns 405 Method Not Allowed", $res['status'] === 405 && strpos($res['body'], '405 Method Not Allowed') !== false);
+
+        // Test 63: Request Validation: POST /api/login missing Content-Type returns 400 Bad Request
+        $res = $this->simulateRequest('POST', '/api/login', json_encode(['email' => 'admin@istanbul.edu.tr', 'password' => 'AdminMis2026!']));
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login missing Content-Type returns 400 status", $res['status'] === 400);
+        $this->assert("POST /api/login missing Content-Type schema matches 400 Bad Request", isset($json['status']) && $json['status'] === 'error' && ($json['error'] ?? '') === '400 Bad Request');
+
+        // Test 64: Request Validation: POST /api/login with malformed JSON body returns 400 Bad Request
+        $res = $this->simulateRequest('POST', '/api/login', '{malformed_json: missing_quotes}', ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login with malformed JSON returns 400 status", $res['status'] === 400 && ($json['error'] ?? '') === '400 Bad Request');
+
+        // Test 65: Input Validation: POST /api/login with missing password returns 422 Unprocessable Entity
+        $res = $this->simulateRequest('POST', '/api/login', json_encode(['email' => 'admin@istanbul.edu.tr']), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login with missing fields returns 422 status", $res['status'] === 422);
+        $this->assert("POST /api/login with missing fields matches 422 Unprocessable Entity schema", isset($json['status']) && $json['status'] === 'error' && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 66: Input Validation: POST /api/login with invalid email syntax returns 422 Unprocessable Entity
+        $res = $this->simulateRequest('POST', '/api/login', json_encode(['email' => 'not-an-email', 'password' => 'secret123']), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login with invalid email returns 422 status", $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 67: Input Validation: POST /api/login with short password (< 6 chars) returns 422 Unprocessable Entity
+        $res = $this->simulateRequest('POST', '/api/login', json_encode(['email' => 'admin@istanbul.edu.tr', 'password' => '123']), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login with short password returns 422 status", $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 68: Authentication: POST /api/login with non-existent user returns 401 Unauthorized
+        $res = $this->simulateRequest('POST', '/api/login', json_encode(['email' => 'unknown@example.com', 'password' => 'password123']), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login with invalid credentials returns 401 status", $res['status'] === 401 && ($json['error'] ?? '') === '401 Unauthorized');
+
+        // Test 69: Authentication: POST /api/login with valid credentials returns 200 OK and Bearer token
+        $res = $this->simulateRequest('POST', '/api/login', json_encode(['email' => 'admin@istanbul.edu.tr', 'password' => 'AdminMis2026!']), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/login succeeds with 200 status", $res['status'] === 200 && ($json['status'] ?? '') === 'success');
+        $this->assert("POST /api/login issues Bearer token", isset($json['token']) && !empty($json['token']) && ($json['token_type'] ?? '') === 'Bearer');
+        $loginToken = $json['token'] ?? '';
+
+        // Test 70: Input Validation: POST /api/register missing required fields returns 422 Unprocessable Entity
+        $res = $this->simulateRequest('POST', '/api/register', json_encode(['email' => 'new.user@alumni.iu.edu.tr']), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/register with missing fields returns 422 status", $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 71: Input Validation: POST /api/register with invalid email syntax returns 422 Unprocessable Entity
+        $res = $this->simulateRequest('POST', '/api/register', json_encode([
+            'email' => 'invalid-email-format',
+            'password' => 'secure123',
+            'first_name' => 'Test',
+            'last_name' => 'User'
+        ]), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/register with invalid email returns 422", $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 72: Input Validation: POST /api/register with short password returns 422 Unprocessable Entity
+        $res = $this->simulateRequest('POST', '/api/register', json_encode([
+            'email' => 'shortpass@example.com',
+            'password' => '12',
+            'first_name' => 'Short',
+            'last_name' => 'Pass'
+        ]), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/register with short password returns 422", $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 73: Registration: POST /api/register creates user and returns 201 Created with token
+        $res = $this->simulateRequest('POST', '/api/register', json_encode([
+            'email' => 'postman.tester@alumni.iu.edu.tr',
+            'password' => 'Secret2026!',
+            'first_name' => 'Postman',
+            'last_name' => 'Tester',
+            'role' => 'alumni'
+        ]), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/register returns 201 Created", $res['status'] === 201 && ($json['status'] ?? '') === 'success');
+        $this->assert("POST /api/register returns valid token", isset($json['token']) && !empty($json['token']));
+
+        // Test 74: Registration: POST /api/register duplicate email returns 422 Unprocessable Entity
+        // Uses a seeded email (always present in default storage) to avoid cross-process state dependency
+        $res = $this->simulateRequest('POST', '/api/register', json_encode([
+            'email' => 'admin@istanbul.edu.tr',
+            'password' => 'AdminMis2026!',
+            'first_name' => 'Admin',
+            'last_name' => 'Duplicate'
+        ]), ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert("POST /api/register duplicate email returns 422 Unprocessable Entity", $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity');
+
+        // Test 75: Auth Middleware: GET /api/profile without token returns 401 Unauthorized JSON
+        $res = $this->simulateRequest('GET', '/api/profile');
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/profile without token returns 401 status", $res['status'] === 401);
+        $this->assert("GET /api/profile without token matches 401 Unauthorized schema", isset($json['status']) && $json['status'] === 'error' && ($json['error'] ?? '') === '401 Unauthorized');
+
+        // Test 76: Auth Middleware: GET /api/profile with invalid token returns 401 Unauthorized JSON
+        $res = $this->simulateRequest('GET', '/api/profile', '', ['HTTP_AUTHORIZATION' => 'Bearer completely_bogus_token']);
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/profile with invalid token returns 401", $res['status'] === 401 && ($json['error'] ?? '') === '401 Unauthorized');
+
+        // Test 77: Auth Middleware: GET /api/profile with valid token returns 200 OK profile data
+        $res = $this->simulateRequest('GET', '/api/profile', '', ['HTTP_AUTHORIZATION' => 'Bearer admin-token']);
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/profile with valid token returns 200 OK", $res['status'] === 200 && ($json['status'] ?? '') === 'success');
+        $this->assert("GET /api/profile contains authenticated user profile", isset($json['data']['email']) && $json['data']['email'] === 'admin@istanbul.edu.tr');
+
+        // Test 78: Authorization Middleware: GET /api/admin with non-admin token returns 403 Forbidden JSON
+        $res = $this->simulateRequest('GET', '/api/admin', '', ['HTTP_AUTHORIZATION' => 'Bearer user-token']);
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/admin with student token returns 403 Forbidden status", $res['status'] === 403);
+        $this->assert("GET /api/admin with student token matches 403 Forbidden schema", isset($json['status']) && $json['status'] === 'error' && ($json['error'] ?? '') === '403 Forbidden');
+
+        // Test 79: Authorization Middleware: GET /api/admin with admin token returns 200 OK dashboard data
+        $res = $this->simulateRequest('GET', '/api/admin', '', ['HTTP_AUTHORIZATION' => 'Bearer admin-token']);
+        $json = json_decode($res['body'], true);
+        $this->assert("GET /api/admin with admin token returns 200 OK status", $res['status'] === 200 && ($json['status'] ?? '') === 'success');
+        $this->assert("GET /api/admin provides administrative dashboard data", isset($json['data']['users_count']) && ($json['data']['system_status'] ?? '') === 'operational');
+
+        // --------------------------------------------------------
+        // Tests 80–84: Input Validation & Controlled 500 Endpoint
+        // --------------------------------------------------------
+
+        // Test 80: Validation — PUT /api/job-postings/{id} with empty title returns 422
+        $res = $this->simulateRequest('PUT', '/api/job-postings/1',
+            json_encode(['title' => '', 'salary_range' => '₺50,000 / month']),
+            ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert(
+            "PUT /api/job-postings with empty title returns 422 Unprocessable Entity",
+            $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity'
+        );
+        $this->assert(
+            "PUT /api/job-postings with empty title includes 'title' in details",
+            isset($json['details']['title'])
+        );
+
+        // Test 81: Validation — PUT /api/job-postings/{id} with invalid salary returns 422
+        $res = $this->simulateRequest('PUT', '/api/job-postings/1',
+            json_encode(['title' => 'Valid Title', 'salary' => -500]),
+            ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert(
+            "PUT /api/job-postings with negative salary returns 422 Unprocessable Entity",
+            $res['status'] === 422 && ($json['error'] ?? '') === '422 Unprocessable Entity'
+        );
+        $this->assert(
+            "PUT /api/job-postings with negative salary includes 'salary' in details",
+            isset($json['details']['salary'])
+        );
+
+        // Test 82: Validation — PUT /api/job-postings/{id} with both invalid fields returns 422 with two detail entries
+        $res = $this->simulateRequest('PUT', '/api/job-postings/1',
+            json_encode(['title' => '', 'salary' => 0]),
+            ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert(
+            "PUT /api/job-postings with both invalid fields returns 422 and two detail entries",
+            $res['status'] === 422
+            && isset($json['details']['title'])
+            && isset($json['details']['salary'])
+        );
+
+        // Test 83: Validation — PUT /api/job-postings/{id} with valid title and positive salary succeeds
+        $res = $this->simulateRequest('PUT', '/api/job-postings/1',
+            json_encode(['title' => 'Senior Data Engineer', 'salary' => 95000]),
+            ['CONTENT_TYPE' => 'application/json']);
+        $json = json_decode($res['body'], true);
+        $this->assert(
+            "PUT /api/job-postings with valid title and positive salary returns 200 OK",
+            $res['status'] === 200 && ($json['status'] ?? '') === 'success'
+        );
+
+        // Test 84: Controlled 500 — GET /api/trigger-500 returns 500 JSON without stack trace
+        $res = $this->simulateRequest('GET', '/api/trigger-500');
+        $json = json_decode($res['body'], true);
+        $this->assert(
+            "GET /api/trigger-500 returns 500 Internal Server Error status",
+            $res['status'] === 500
+        );
+        $this->assert(
+            "GET /api/trigger-500 response matches standardized 500 JSON schema",
+            is_array($json)
+            && ($json['status']  ?? '') === 'error'
+            && ($json['error']   ?? '') === '500 Internal Server Error'
+            && isset($json['message'])
+        );
+        $this->assert(
+            "GET /api/trigger-500 does not expose raw stack trace in response body",
+            strpos($res['body'], '#0 ') === false
+            && strpos($res['body'], 'Stack trace') === false
+            && strpos($res['body'], 'Uncaught') === false
+        );
+
         echo "\n--------------------------------------------------------\n";
         echo "Results: {$this->passed} Passed, {$this->failed} Failed\n";
         echo "========================================================\n";
@@ -407,6 +634,7 @@ class ApiTester {
         $escapedIndex = escapeshellarg($indexScript);
 
         $envSetup = [
+            "register_shutdown_function(function() { echo PHP_EOL . '__HTTP_STATUS__:' . http_response_code(); });",
             "\$GLOBALS['_SERVER']['REQUEST_METHOD'] = " . var_export($method, true) . ";",
             "\$GLOBALS['_SERVER']['REQUEST_URI'] = " . var_export($uri, true) . ";",
             "\$GLOBALS['_SERVER']['SCRIPT_NAME'] = '/index.php';",
@@ -454,9 +682,13 @@ class ApiTester {
             unlink($bodyFile);
         }
 
-        // Detect HTTP status code if set in output
+        // Detect HTTP status code via shutdown function or output inspection
         $httpStatus = 200;
-        if (strpos($output, 'Invalid parameters:') !== false || strpos($output, 'validation error') !== false) {
+        if (strpos($output, '__HTTP_STATUS__:') !== false) {
+            $parts = explode('__HTTP_STATUS__:', $output);
+            $output = rtrim($parts[0]);
+            $httpStatus = (int)trim($parts[1]);
+        } elseif (strpos($output, 'Invalid parameters:') !== false || strpos($output, 'validation error') !== false) {
             $httpStatus = 400;
         } elseif (strpos($output, 'Route not found') !== false || strpos($output, '404 Not Found') !== false) {
             $httpStatus = 404;

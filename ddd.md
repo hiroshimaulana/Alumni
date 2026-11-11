@@ -43,15 +43,23 @@ An entity that encapsulates all details, validation rules, and publication const
 * `EmploymentType`: `full_time` | `part_time` | `internship` | `contract` | `remote`
 * `ExperienceLevel`: `entry` | `mid` | `senior` | `lead` | `executive`
 * `JobStatus`: `draft` | `active` | `closed` | `archived`
-* `SalaryRange`: Formatted monetary compensation string (e.g. `₺45,000 - ₺65,000 / month`, `$90,000 - $120,000 / year`)
+* `Salary`: Optional positive decimal number (> 0).
 * `ApplicationDeadline`: ISO 8601 Date (`YYYY-MM-DD`) indicating listing expiration
 
 #### Domain Invariants & Rules:
 1. Every job posting must be attributed to an authentic poster (`posted_by_user_id` referencing a valid `User`).
-2. Title and description must not be empty.
+2. Title is required (max 120 characters) and a company must be specified. Description is optional.
 3. If a deadline is defined, it must represent a valid future or current calendar date.
 4. Only postings with `JobStatus::ACTIVE` accept new candidate submissions.
 5. Deletion of a job posting cascades or soft-archives child applications according to regulatory data retention rules.
+
+#### Entity Validation Rules
+- **`title`**: Required, maximum 120 characters.
+- **`Company`**: Required (`company_name` must be non-empty; `company_id` stays optional).
+- **`salary`**: Optional. If provided, it must be a positive number.
+- **`description`**: Optional (text string).
+
+> These rules apply to `store` and `update` in both `JobPostingController` and `ApiJobPostingController`.
 
 ---
 
@@ -109,11 +117,11 @@ CREATE TABLE IF NOT EXISTS `job_postings` (
     `posted_by_user_id` INT NOT NULL,
     `company_name` VARCHAR(255) NOT NULL,
     `company_id` INT NULL,
-    `title` VARCHAR(255) NOT NULL,
-    `description` TEXT NOT NULL,
+    `title` VARCHAR(120) NOT NULL,
+    `description` TEXT NULL,
     `employment_type` ENUM('full_time', 'part_time', 'internship', 'contract', 'remote') NOT NULL DEFAULT 'full_time',
     `location` VARCHAR(150) NOT NULL,
-    `salary_range` VARCHAR(100) NULL,
+    `salary` DECIMAL(12,2) NULL,
     `experience_level` ENUM('entry', 'mid', 'senior', 'lead', 'executive') NOT NULL DEFAULT 'mid',
     `status` ENUM('draft', 'active', 'closed', 'archived') NOT NULL DEFAULT 'active',
     `requirements` TEXT NULL,
@@ -121,6 +129,7 @@ CREATE TABLE IF NOT EXISTS `job_postings` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_job_postings_posted_by` FOREIGN KEY (`posted_by_user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    CONSTRAINT `chk_job_postings_salary` CHECK (`salary` IS NULL OR `salary` > 0),
     INDEX `idx_job_postings_status` (`status`),
     INDEX `idx_job_postings_company_id` (`company_id`),
     INDEX `idx_job_postings_posted_by` (`posted_by_user_id`),

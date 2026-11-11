@@ -109,3 +109,171 @@ Content-Type: application/json
 ### 21. API: Delete User (DELETE /api/users/5)
 DELETE {{baseUrl}}/api/users/5
 Accept: application/json
+
+### 22. Error Handling: Undefined Web Route (GET /invalid-endpoint)
+# Expect HTTP 404 Not Found status code and views/404.html error view
+GET {{baseUrl}}/invalid-endpoint
+Accept: text/html
+
+### 23. Error Handling: Undefined API Route (GET /api/invalid-endpoint)
+# Expect HTTP 404 Not Found status code and structured JSON error response
+GET {{baseUrl}}/api/invalid-endpoint
+Accept: application/json
+
+### 24. Error Handling: Undefined POST Route (POST /invalid-endpoint)
+# Expect HTTP 404 Not Found status code (never 200 skeleton fallback)
+POST {{baseUrl}}/invalid-endpoint
+Content-Type: application/json
+
+{
+    "query": "test_invalid_path"
+}
+
+### 25. Error Handling: Missing Static Asset (GET /assets/missing.css)
+# Expect HTTP 404 Not Found status code and 404 error page
+GET {{baseUrl}}/assets/missing.css
+Accept: text/html
+
+### 26. Error Handling: 405 Method Not Allowed (POST /users/create)
+# Expect HTTP 405, Allow: GET header, and JSON error body
+POST {{baseUrl}}/users/create
+Content-Type: application/json
+
+{}
+
+### 27. Auth: POST /api/login — Missing Content-Type (expect 400)
+POST {{baseUrl}}/api/login
+
+{"email":"admin@istanbul.edu.tr","password":"AdminMis2026!"}
+
+### 28. Auth: POST /api/login — Malformed JSON (expect 400)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+not valid json at all
+
+### 29. Auth: POST /api/login — Missing password field (expect 422)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{"email":"admin@istanbul.edu.tr"}
+
+### 30. Auth: POST /api/login — Invalid email syntax (expect 422)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{"email":"not-an-email","password":"secret123"}
+
+### 31. Auth: POST /api/login — Short password < 6 chars (expect 422)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{"email":"admin@istanbul.edu.tr","password":"123"}
+
+### 32. Auth: POST /api/login — Non-existent user (expect 401)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{"email":"nobody@example.com","password":"password123"}
+
+### 33. Auth: POST /api/login — Valid credentials (expect 200 + Bearer token)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{"email":"admin@istanbul.edu.tr","password":"AdminMis2026!"}
+
+### 34. Auth: POST /api/register — Missing required fields (expect 422)
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{"email":"new.user@alumni.iu.edu.tr"}
+
+### 35. Auth: POST /api/register — Invalid email (expect 422)
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{"email":"bad-email","password":"secure123","first_name":"Test","last_name":"User"}
+
+### 36. Auth: POST /api/register — Short password (expect 422)
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{"email":"short@example.com","password":"12","first_name":"Short","last_name":"Pass"}
+
+### 37. Auth: POST /api/register — Successful registration (expect 201)
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+    "email": "new.graduate@alumni.iu.edu.tr",
+    "password": "Secure2026!",
+    "first_name": "Yeni",
+    "last_name": "Mezun",
+    "role": "alumni"
+}
+
+### 38. Auth: POST /api/register — Duplicate email (expect 422)
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+    "email": "admin@istanbul.edu.tr",
+    "password": "AdminMis2026!",
+    "first_name": "Admin",
+    "last_name": "Duplicate"
+}
+
+### 39. Protected: GET /api/profile — No token (expect 401)
+GET {{baseUrl}}/api/profile
+Accept: application/json
+
+### 40. Protected: GET /api/profile — Invalid token (expect 401)
+GET {{baseUrl}}/api/profile
+Authorization: Bearer totally_invalid_token
+Accept: application/json
+
+### 41. Protected: GET /api/profile — Valid token (expect 200)
+GET {{baseUrl}}/api/profile
+Authorization: Bearer admin-token
+Accept: application/json
+
+### 42. Admin: GET /api/admin — Non-admin token (expect 403)
+GET {{baseUrl}}/api/admin
+Authorization: Bearer user-token
+Accept: application/json
+
+### 43. Admin: GET /api/admin — Admin token (expect 200)
+GET {{baseUrl}}/api/admin
+Authorization: Bearer admin-token
+Accept: application/json
+
+### 44. Validation: PUT /api/job-postings/1 — Empty title (expect 422)
+PUT {{baseUrl}}/api/job-postings/1
+Content-Type: application/json
+
+{"title": "", "salary_range": "₺50,000 / month"}
+
+### 45. Validation: PUT /api/job-postings/1 — Negative salary (expect 422)
+PUT {{baseUrl}}/api/job-postings/1
+Content-Type: application/json
+
+{"title": "Valid Title", "salary": -500}
+
+### 46. Validation: PUT /api/job-postings/1 — Both fields invalid (expect 422 with two detail entries)
+PUT {{baseUrl}}/api/job-postings/1
+Content-Type: application/json
+
+{"title": "", "salary": 0}
+
+### 47. Validation: PUT /api/job-postings/1 — Valid fields (expect 200)
+PUT {{baseUrl}}/api/job-postings/1
+Content-Type: application/json
+
+{"title": "Senior Data Engineer", "salary": 95000}
+
+### 48. Exception Handling: GET /api/trigger-500 — Controlled 500 (expect 500 JSON, no stack trace)
+# Intentionally triggers an unhandled exception to exercise the global exception handler.
+# Remove or gate behind APP_ENV before deploying to production.
+GET {{baseUrl}}/api/trigger-500
+Accept: application/json
+

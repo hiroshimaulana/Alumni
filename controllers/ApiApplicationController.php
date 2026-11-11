@@ -17,6 +17,33 @@ class ApiApplicationController {
     private function jsonResponse($data, int $statusCode = 200): void {
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
+
+        if (is_array($data) && ($statusCode >= 400 || ($data['status'] ?? '') === 'error')) {
+            $statusMap = [
+                400 => '400 Bad Request',
+                401 => '401 Unauthorized',
+                403 => '403 Forbidden',
+                404 => '404 Not Found',
+                405 => '405 Method Not Allowed',
+                422 => '422 Unprocessable Entity',
+                500 => '500 Internal Server Error',
+            ];
+            $status = $data['status'] ?? 'error';
+            $error = $data['error'] ?? ($statusMap[$statusCode] ?? "{$statusCode} Error");
+            $message = $data['message'] ?? 'An error occurred with status code ' . $statusCode;
+            $normalized = [
+                'status'  => $status,
+                'error'   => $error,
+                'message' => $message,
+            ];
+            foreach ($data as $k => $v) {
+                if (!in_array($k, ['status', 'error', 'message'], true)) {
+                    $normalized[$k] = $v;
+                }
+            }
+            $data = $normalized;
+        }
+
         echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit;
     }

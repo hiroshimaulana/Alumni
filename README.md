@@ -12,6 +12,8 @@ A comprehensive, enterprise-ready alumni tracking system and engagement portal d
 
 ## Table of Contents
 
+- [Recent Updates & Architecture Enhancements](#recent-updates--architecture-enhancements)
+
 1. [Project Overview](#1-project-overview)
 2. [Key Features & System Modules](#2-key-features--system-modules)
    - [2.1 Alumni Directory & Profile Management](#21-alumni-directory--profile-management-the-core-tracking-system)
@@ -45,6 +47,20 @@ A comprehensive, enterprise-ready alumni tracking system and engagement portal d
 7. [Contributing](#7-contributing)
 8. [License](#8-license)
 9. [Contact & Institutional Credits](#9-contact--institutional-credits)
+
+---
+
+## Recent Updates & Architecture Enhancements
+
+- **DDD Validation**: Added explicit validation rules for `JobPosting` entities, enforced on `store` and `update` in both the web and REST controllers:
+  - `title`: required, maximum 120 characters.
+  - `company`: required (`company_name` must be non-empty; `company_id` stays optional).
+  - `salary`: optional; must be a positive number if provided. Stored as `DECIMAL(12,2)` with a `CHECK (salary > 0)` constraint, replacing the old `salary_range` string column.
+  - `description`: optional text.
+- **Request Logger**: An inline logger in `index.php` writes one console line per request, in the format `[time] [method] [route] [status] [duration ms]`, when the request finishes. It replaces the `RequestLogger::start()` call to avoid logging every request twice; that call is kept commented out so the middleware class can be restored.
+- **404 Guardian**: The `handleNotFound()` function returns a standardized JSON 404 payload (`status`, `error`, `message`) for any unmatched route.
+- **5xx Guardian**: A global exception handler returns a clean JSON `500 Internal Server Error` response without exposing internal details, for uncaught exceptions thrown outside the main dispatch `try/catch`.
+- **File Error Logging**: The `logs/` folder and `logs/error.log` are created automatically to capture server-side crash details (message, file, line, and stack trace).
 
 ---
 
@@ -189,6 +205,14 @@ Alumni/
 │   ├── openapi.json            # Complete OpenAPI 3.0.3 JSON specification
 │   └── openapi.yaml            # Complete OpenAPI 3.0.3 YAML specification
 │
+├── logs/                       # [Runtime Logs] Auto-created at runtime
+│   └── error.log               # Server-side 5xx crash details (message, file, line, stack trace)
+│
+├── middleware/                 # [Middleware] Cross-cutting request/response handlers
+│   ├── ServerErrorHandler.php  # 5xx guardian: logs errors and returns clean JSON 500 responses
+│   ├── RequestLogger.php       # Request logger middleware (currently replaced by the inline logger in index.php)
+│   └── NotFoundHandler.php     # Content-negotiated 404 handler (HTML or JSON)
+│
 ├── models/                     # [Models / Domain] Application Domain Models
 │   └── User.php                # In-memory User model with full CRUD operations (zero DB required)
 │
@@ -201,25 +225,29 @@ Alumni/
 │   ├── main.html               # Alumni portal dashboard, responsive UI, dynamic JS directory consumer
 │   ├── about.html              # Department overview, academic history, accreditation, and faculty info
 │   ├── users.html              # User management UI view (directory table, stats, create modal)
-│   └── swagger.html            # Interactive Swagger UI API documentation explorer
+│   ├── job_postings.html       # Career Hub & opportunities board UI
+│   ├── applications.html       # Candidate applications tracking UI
+│   ├── swagger.html            # Interactive Swagger UI API documentation explorer
+│   └── 404.html                # Branded 404 Not Found error page for unmatched routes
 │
 └── tests/                      # [Quality Assurance] Automated & Declarative Test Suites
     ├── api_tests.http          # RFC 2616 HTTP test collection for REST clients (VS Code / Postman)
-    └── test_endpoints.php      # Automated PHP CLI test suite (46 assertion checks across all routes & CRUD)
+    └── test_endpoints.php      # Automated PHP CLI test suite (82 assertion checks across all routes, CRUD & 404s)
 ```
 
 #### Component Categorization & Architectural Roles
 
 | Architectural Role | File / Directory | Key Responsibilities |
 |---|---|---|
-| **Front Controller** | `index.php` | • Intercepts all incoming HTTP requests via `.htaccess`<br>• Normalizes URI paths and handles subdirectory deployments (e.g., `/Alumni`)<br>• Initializes the core Router and connects the dedicated routes layer (`routes/web.php`, `routes/api.php`)<br>• Dispatches requests across route groups (`/`, `/about`, `/users`, `/api/users`, `/alumni`, `/swagger`, `/openapi.json`, `/auto/*`)<br>• Handles `POST` payload ingestion (JSON and Form)<br>• Implements response helpers: `renderView()`, `jsonResponse()`, `textResponse()`<br>• Content-negotiates 404 error responses (HTML vs. JSON) |
-| **Dedicated Routes Layer** | `routes/`<br>├── `Router.php`<br>├── `web.php`<br>└── `api.php` | • **`Router.php`**: Core OOP Router providing parametric regex pattern matching (`{id}`), HTTP verb dispatching (`GET`, `POST`, `PUT`, `DELETE`), and reflection-based controller method invocation<br>• **`web.php`**: Registers web routes mapping to `UserController` actions, specifically `GET /users` (Read operation) and `POST /users` (Create operation)<br>• **`api.php`**: Registers RESTful API routes mapping to `ApiUserController` actions |
-| **Web Controllers** | `controllers/UserController.php`<br>`alumni.php` | • **`UserController`**: Implements standard web request methods (`index()`, `show()`, `create()`, `store()`, `update()`, `delete()`) for user management, rendering HTML views and processing form submissions<br>• **`alumni.php`**: Resource controller querying alumni records, formatting JSON responses, and managing standby failover |
-| **API Controllers** | `controllers/ApiUserController.php` | • **`ApiUserController`**: Dedicated RESTful API controller providing complete JSON CRUD operations (`index()`, `show()`, `store()`, `update()`, `destroy()`) with appropriate HTTP status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found) |
-| **Views (Presentation Layer)** | `views/`<br>├── `main.html`<br>├── `about.html`<br>├── `users.html`<br>└── `swagger.html` | • **`main.html`**: Primary portal interface featuring Istanbul University institutional branding, KPI metrics, responsive styling, and client-side JavaScript that asynchronously consumes `GET /alumni` to render interactive profile cards<br>• **`about.html`**: Informational view presenting department background, accreditation standards, and faculty contact info<br>• **`users.html`**: User directory UI featuring live filtering, real-time metrics, interactive creation modal, and responsive actions<br>• **`swagger.html`**: Interactive Swagger UI client rendering the OpenAPI 3.0 specification |
+| **Front Controller** | `index.php` | • Intercepts all incoming HTTP requests via `.htaccess`<br>• Normalizes URI paths and handles subdirectory deployments (e.g., `/Alumni`)<br>• Initializes the core Router and connects the dedicated routes layer (`routes/web.php`, `routes/api.php`)<br>• Dispatches requests across route groups (`/`, `/about`, `/users`, `/api/users`, `/job-postings`, `/applications`, `/alumni`, `/swagger`, `/openapi.json`, `/auto/*`)<br>• Validates physical static assets before route resolution<br>• Performs explicit route matching and executes handlers<br>• Returns standardized JSON 404 responses for unmatched routes (`handleNotFound()`) and JSON 500 responses for uncaught exceptions<br>• Logs each request (`[time] [method] [route] [status] [duration ms]`) on shutdown |
+| **Dedicated Routes Layer** | `routes/`<br>├── `Router.php`<br>├── `web.php`<br>└── `api.php` | • **`Router.php`**: Core OOP Router providing parametric regex pattern matching (`{id}`), HTTP verb dispatching (`GET`, `POST`, `PUT`, `DELETE`), explicit route validation (`hasRoute()`, `hasPath()`, `isDefinedRoute()`), and reflection-based controller method invocation<br>• **`web.php`**: Registers web routes mapping to controller actions<br>• **`api.php`**: Registers RESTful API routes mapping to API controller actions |
+| **Web Controllers** | `controllers/UserController.php`<br>`controllers/JobPostingController.php`<br>`controllers/ApplicationController.php`<br>`alumni.php` | • Web controllers implementing HTML view rendering, form processing, and model interactions<br>• **`alumni.php`**: Resource controller querying alumni records, formatting JSON responses, and managing standby failover |
+| **API Controllers** | `controllers/ApiUserController.php`<br>`controllers/ApiJobPostingController.php`<br>`controllers/ApiApplicationController.php` | • Dedicated RESTful API controllers providing complete JSON CRUD operations with appropriate HTTP status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found) |
+| **Views (Presentation Layer)** | `views/`<br>├── `main.html`<br>├── `about.html`<br>├── `users.html`<br>├── `job_postings.html`<br>├── `applications.html`<br>├── `swagger.html`<br>└── `404.html` | • HTML5 templates with Istanbul University institutional styling<br>• **`404.html`**: Dedicated 404 error view rendered on unmatched routes and missing resources |
 | **Model & Data Layer** | `models/User.php`<br>`database/schema.sql`<br>`config/db.php` | • **`models/User.php`**: Standalone in-memory User model providing full CRUD capabilities (`create()`, `all()`, `findById()`, `findByEmail()`, `update()`, `delete()`, `reset()`, `count()`) without requiring an external database connection, featuring data validation and optional session persistence<br>• **`database/schema.sql`**: Relational database model definition (`users`, `alumni_profiles`), foreign keys (`ON DELETE CASCADE`), indexes, and default seed fixtures<br>• **`config/db.php`**: Data Access Layer (DAL) establishing a singleton PDO instance with strict error modes (`ATTR_ERRMODE_EXCEPTION`) and connection timeout protection |
 | **API Specifications (Docs)** | `docs/openapi.json`<br>`docs/openapi.yaml` | • Complete **OpenAPI 3.0.3 / Swagger** contract definitions documenting all web endpoints under `/users` and REST API endpoints under `/api/users` with schema contracts, request bodies, and responses |
 | **Configuration (Config)** | `config/config.php` | • Centralized configuration returning environment variables (`development`/`production`), base URL, database connection parameters, and university institutional credits |
+| **Middleware & Error Handling** | `middleware/`<br>├── `ServerErrorHandler.php`<br>├── `RequestLogger.php`<br>└── `NotFoundHandler.php`<br>`logs/error.log` | • **`ServerErrorHandler.php`**: Registers the error handler and logs 5xx failures to `logs/error.log`<br>• **Global exception handler (`index.php`)**: Returns a clean JSON 500 payload and appends crash details to `logs/error.log`<br>• **`RequestLogger.php`**: Request logger middleware, currently replaced by the inline logger in `index.php`<br>• **`NotFoundHandler.php`**: Content-negotiated 404 handler (HTML or JSON), available as an alternative to `handleNotFound()` |
 | **Web Gateway / Public Entry** | `.htaccess` | • Apache URL rewriting engine acting as the single entry-point gateway<br>• Rewrites non-static file/directory requests to `index.php`, protecting internal directories and ensuring clean URLs |
 | **Test Suite** | `tests/test_endpoints.php`<br>`tests/api_tests.http` | • Automated integration test harness executing 46 test cases against the Front Controller, Routes Layer, User Model CRUD, Web Controllers, API endpoints, and OpenAPI spec schemas without requiring external test dependencies |
 

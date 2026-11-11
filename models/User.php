@@ -204,6 +204,12 @@ class User {
             'updated_at' => $now
         ];
 
+        if (isset($data['password_hash'])) {
+            $newUser['password_hash'] = $data['password_hash'];
+        } elseif (isset($data['password'])) {
+            $newUser['password_hash'] = password_hash((string)$data['password'], PASSWORD_BCRYPT);
+        }
+
         self::$storage[] = $newUser;
         self::syncStorage();
 

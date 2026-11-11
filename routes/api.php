@@ -11,6 +11,24 @@
 
 return function (Router $router): void {
     // -------------------------------------------------------------
+    // REST API: Authentication & Protected Core Endpoints
+    // -------------------------------------------------------------
+    $router->post('/api/login',    ['ApiAuthController', 'login']);
+    $router->post('/api/register', ['ApiAuthController', 'register']);
+    $router->get('/api/profile',   ['ApiAuthController', 'profile']);
+    $router->get('/api/admin',     ['ApiAuthController', 'admin']);
+
+    // -------------------------------------------------------------
+    // REST API: Development / Testing Utilities
+    // Intentionally triggers an unhandled exception so the global
+    // exception handler can be exercised in automated test suites.
+    // Remove or gate behind an env-flag before deploying to production.
+    // -------------------------------------------------------------
+    $router->get('/api/trigger-500', function(): void {
+        throw new \Exception('Database connection failed');
+    });
+
+    // -------------------------------------------------------------
     // REST API: Users CRUD
     // -------------------------------------------------------------
     $router->get('/api/users',                 ['ApiUserController', 'index']);

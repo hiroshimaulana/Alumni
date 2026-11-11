@@ -148,6 +148,70 @@ class Router {
     }
 
     /**
+     * Check if a route exists for the specified HTTP method and URI path.
+     *
+     * @param string $method HTTP request method.
+     * @param string $path Normalized request URI path.
+     * @return bool True if a route matches, false otherwise.
+     */
+    public function hasRoute(string $method, string $path): bool {
+        return $this->match($method, $path) !== null;
+    }
+
+    /**
+     * Check if a URI path exists in defined routes for any HTTP method.
+     *
+     * @param string $path Normalized request URI path.
+     * @return bool True if the path pattern matches any registered route.
+     */
+    public function hasPath(string $path): bool {
+        $normalizedPath = '/' . trim($path, '/');
+        if ($normalizedPath === '//') {
+            $normalizedPath = '/';
+        }
+
+        foreach ($this->routes as $route) {
+            if (preg_match($route['regex'], $normalizedPath)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the requested URI path exists in our defined routes.
+     *
+     * @param string $path Normalized request URI path.
+     * @return bool True if route is defined in the system.
+     */
+    public function isDefinedRoute(string $path): bool {
+        return $this->hasPath($path);
+    }
+
+    /**
+     * Retrieve all HTTP methods allowed for the specified URI path.
+     *
+     * @param string $path Request URI path.
+     * @return array Array of allowed HTTP method strings.
+     */
+    public function getAllowedMethods(string $path): array {
+        $normalizedPath = '/' . trim($path, '/');
+        if ($normalizedPath === '//') {
+            $normalizedPath = '/';
+        }
+
+        $methods = [];
+        foreach ($this->routes as $route) {
+            if (preg_match($route['regex'], $normalizedPath)) {
+                $methods[] = $route['method'];
+            }
+        }
+
+        return array_values(array_unique($methods));
+    }
+
+    /**
      * Dispatch the matched route and execute its controller action.
      *
      * @param string $method HTTP method.

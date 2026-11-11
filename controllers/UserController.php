@@ -297,10 +297,11 @@ class UserController {
      *          oldInput (create modal values), status (HTTP code).
      */
     private function render(array $users, array $opts = []): void {
-        $title      = (string)($opts['title'] ?? 'User Directory');
-        $notice     = $opts['notice'] ?? null;
-        $noticeType = in_array($opts['noticeType'] ?? 'info', self::NOTICE_TYPES, true) ? $opts['noticeType'] : 'info';
-        $status     = (int)($opts['status'] ?? 200);
+        $title         = (string)($opts['title'] ?? 'User Directory');
+        $notice        = $opts['notice'] ?? null;
+        $rawNoticeType = $opts['noticeType'] ?? 'info';
+        $noticeType    = in_array($rawNoticeType, self::NOTICE_TYPES, true) ? $rawNoticeType : 'info';
+        $status        = (int)($opts['status'] ?? 200);
 
         http_response_code($status);
         header('Content-Type: text/html; charset=utf-8');
